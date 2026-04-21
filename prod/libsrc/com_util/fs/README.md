@@ -15,7 +15,7 @@
 
 ## 設計の要点
 
-このモジュールは、まず内部で `vsnprintf` によりパス文字列を生成し、その後で対応する OS API を呼ぶ方針です。  
+このモジュールは、まず内部で `vsnprintf` によりパス文字列を生成し、その後で `file_io.c` の対応 API を呼ぶ方針です。  
 生成したパスが `PLATFORM_PATH_MAX` に収まらない場合は失敗します。
 
 - `fopen_fmt` / `vfopen_fmt`: `fopen` 系のラッパー
@@ -25,8 +25,7 @@
 - `access_fmt` / `vaccess_fmt`: 存在確認・権限確認
 - `mkdir_fmt` / `vmkdir_fmt`: ディレクトリ作成
 
-Windows では `_open`、`_access`、`_mkdir`、`_stat64` などの対応 API を使います。  
-Linux では通常の `open`、`access`、`mkdir`、`stat` を使います。
+Windows と Linux の API 差は `file_io.c` 側で吸収します。
 
 ## 代表 API
 
@@ -98,17 +97,11 @@ if (access_fmt(ACCESS_FMT_F_OK, "./logs/app_%03d.txt", 7) != 0) {
 
 ## プラットフォームごとの動作
 
-### Windows
+### Windows / Linux
 
-- パス長上限は `MAX_PATH` ベース
-- `stat` は `_stat64` を使う
-- `open` / `access` / `mkdir` は `_open` / `_access` / `_mkdir` を使う
-
-### Linux / 非 Windows
-
-- パス長上限は通常 `PATH_MAX`
-- `stat` は `struct stat`
-- `open` / `access` / `mkdir` は標準 API を使う
+- パス長上限は `PLATFORM_PATH_MAX` に従う
+- `path_format.c` は書式展開後に `file_io.c` の `com_util_*` API を呼ぶ
+- 実際に使う OS API と UTF-8 パスの扱いは `file_io.c` に集約する
 
 ## 注意点
 

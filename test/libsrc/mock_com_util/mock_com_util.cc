@@ -16,6 +16,18 @@ Mock_com_util::Mock_com_util()
         .WillByDefault(Return(-1));
     ON_CALL(*this, com_util_passphrase_to_key(_, _, _))
         .WillByDefault(Return(-1));
+    ON_CALL(*this, com_util_fopen(_, _, _))
+        .WillByDefault(Return(nullptr));
+    ON_CALL(*this, com_util_stat(_, _))
+        .WillByDefault(Return(-1));
+    ON_CALL(*this, com_util_open(_, _, _))
+        .WillByDefault(Return(-1));
+    ON_CALL(*this, com_util_access(_, _))
+        .WillByDefault(Return(-1));
+    ON_CALL(*this, com_util_mkdir(_))
+        .WillByDefault(Return(-1));
+    ON_CALL(*this, com_util_remove(_))
+        .WillByDefault(Return(-1));
     ON_CALL(*this, trace_logger_create())
         .WillByDefault(Return(nullptr)); // 一般的にはモックの既定の挙動は NOP にしておき、テストプログラムで具体的な挙動を決める
     ON_CALL(*this, trace_logger_destroy(_))

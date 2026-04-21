@@ -4,10 +4,6 @@
 #include <string.h>
 #include <errno.h>
 
-#if defined(PLATFORM_WINDOWS)
-    #include <share.h>
-#endif /* PLATFORM_WINDOWS */
-
 /* ===== 内部ヘルパーマクロ ===== */
 
 /**
@@ -104,13 +100,7 @@ COM_UTIL_EXPORT int COM_UTIL_API com_util_vstat_fmt(util_file_stat_t *buf, const
         return -1;
     }
 
-    /* stat を呼び出してファイル情報を取得 */
-#if defined(PLATFORM_LINUX)
-    return stat(filename, buf);
-#elif defined(PLATFORM_WINDOWS)
-    /* Windows では _stat64 を使用（util_file_stat_t は struct _stat64 の typedef） */
-    return _stat64(filename, buf);
-#endif /* PLATFORM_ */
+    return com_util_stat(buf, filename);
 }
 
 /* Doxygen コメントは、ヘッダに記載 */
@@ -156,20 +146,7 @@ COM_UTIL_EXPORT int COM_UTIL_API com_util_vopen_fmt(int flags, int mode, const c
 {
     FMTIO_FORMAT_FILENAME(format, args, -1)
 
-#if defined(PLATFORM_LINUX)
-    return open(filename, flags, mode);
-#elif defined(PLATFORM_WINDOWS)
-    int fd = -1;
-    errno_t open_result;
-
-    open_result = _sopen_s(&fd, filename, flags, _SH_DENYNO, mode);
-    if (open_result != 0)
-    {
-        return -1;
-    }
-
-    return fd;
-#endif /* PLATFORM_ */
+    return com_util_open(filename, flags, mode);
 }
 
 /* Doxygen コメントは、ヘッダに記載 */
@@ -192,11 +169,7 @@ COM_UTIL_EXPORT int COM_UTIL_API com_util_vaccess_fmt(int mode, const char *form
 {
     FMTIO_FORMAT_FILENAME(format, args, -1)
 
-#if defined(PLATFORM_LINUX)
-    return access(filename, mode);
-#elif defined(PLATFORM_WINDOWS)
-    return _access(filename, mode);
-#endif /* PLATFORM_ */
+    return com_util_access(filename, mode);
 }
 
 /* Doxygen コメントは、ヘッダに記載 */
@@ -219,11 +192,7 @@ COM_UTIL_EXPORT int COM_UTIL_API com_util_vmkdir_fmt(const char *format, va_list
 {
     FMTIO_FORMAT_FILENAME(format, args, -1)
 
-#if defined(PLATFORM_LINUX)
-    return mkdir(filename, 0755);
-#elif defined(PLATFORM_WINDOWS)
-    return _mkdir(filename);
-#endif /* PLATFORM_ */
+    return com_util_mkdir(filename);
 }
 
 /* Doxygen コメントは、ヘッダに記載 */

@@ -23,9 +23,28 @@
 #include <stdarg.h>
 #include <stdint.h>
 #include <stdio.h>
+#include <sys/stat.h>
 #include <com_util/base/platform.h>
 #include <com_util/base/compiler.h>
 #include <com_util_export.h>
+
+#if defined(PLATFORM_LINUX)
+    #include <fcntl.h>
+    #include <unistd.h>
+#elif defined(PLATFORM_WINDOWS)
+    #include <fcntl.h>
+    #include <io.h>
+    #include <direct.h>
+#endif /* PLATFORM_ */
+
+#ifndef COM_UTIL_FILE_STAT_T_DEFINED
+#define COM_UTIL_FILE_STAT_T_DEFINED
+#if defined(PLATFORM_LINUX)
+typedef struct stat util_file_stat_t;
+#elif defined(PLATFORM_WINDOWS)
+typedef struct _stat64 util_file_stat_t;
+#endif /* PLATFORM_ */
+#endif /* COM_UTIL_FILE_STAT_T_DEFINED */
 
 #ifdef __cplusplus
 extern "C"
@@ -55,6 +74,46 @@ extern "C"
     COM_UTIL_EXPORT FILE *COM_UTIL_API com_util_fopen(const char *path,
                                                        const char *modes,
                                                        int        *errno_out);
+
+    /**
+     *  @brief          UTF-8 パスでファイル情報を取得します。
+     *
+     *  @param[out]     buf  ファイル情報の格納先。
+     *  @param[in]      path UTF-8 ファイルパス文字列。
+     *  @return         成功時は 0、失敗時は -1。
+     */
+    COM_UTIL_EXPORT int COM_UTIL_API com_util_stat(util_file_stat_t *buf,
+                                                    const char       *path);
+
+    /**
+     *  @brief          UTF-8 パスで低レベルファイルを開きます。
+     *
+     *  @param[in]      path  UTF-8 ファイルパス文字列。
+     *  @param[in]      flags オープンフラグ。
+     *  @param[in]      mode  作成時のパーミッション。
+     *  @return         成功時はファイルディスクリプタ、失敗時は -1。
+     */
+    COM_UTIL_EXPORT int COM_UTIL_API com_util_open(const char *path,
+                                                    int         flags,
+                                                    int         mode);
+
+    /**
+     *  @brief          UTF-8 パスのアクセス可否を確認します。
+     *
+     *  @param[in]      path UTF-8 ファイルパス文字列。
+     *  @param[in]      mode 確認するアクセスモード。
+     *  @return         アクセス可能な場合は 0、不可の場合は -1。
+     */
+    COM_UTIL_EXPORT int COM_UTIL_API com_util_access(const char *path,
+                                                      int         mode);
+
+    /**
+     *  @brief          UTF-8 パスのディレクトリを作成します。
+     *
+     *  @param[in]      path UTF-8 ディレクトリパス文字列。
+     *  @return         成功時は 0、失敗時は -1。
+     */
+    COM_UTIL_EXPORT int COM_UTIL_API com_util_mkdir(const char *path);
 
     /**
      *  @brief          UTF-8 パスのファイルを削除します。

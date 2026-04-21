@@ -1,5 +1,5 @@
 #include <testfw.h>
-#include <mock_stdio.h>
+#include <mock_com_util.h>
 #include <com_util/fs/path_format.h>
 #include <string.h>
 #include <errno.h>
@@ -13,11 +13,11 @@ class fopenfTest : public Test
 TEST_F(fopenfTest, test_null_modes)
 {
     // Arrange
-    Mock_stdio mock_stdio;
+    Mock_com_util mock_com_util;
 
     // Pre-Assert
-    EXPECT_CALL(mock_stdio, fopen(_, _, _, _, _))
-        .Times(0); // [Pre-Assert確認_異常系] - fopen が呼び出されないこと。
+    EXPECT_CALL(mock_com_util, com_util_fopen(_, _, _))
+        .Times(0); // [Pre-Assert確認_異常系] - com_util_fopen が呼び出されないこと。
 
     // Act
     FILE *fp = com_util_fopen_fmt(NULL, NULL, "test_%d.txt", 1); // [手順] - modes に NULL を渡す。
@@ -29,11 +29,11 @@ TEST_F(fopenfTest, test_null_modes)
 TEST_F(fopenfTest, test_null_modes)
 {
     // Arrange
-    Mock_stdio mock_stdio;
+    Mock_com_util mock_com_util;
 
     // Pre-Assert
-    EXPECT_CALL(mock_stdio, fopen_s(_, _, _, _, _, _))
-        .Times(0); // [Pre-Assert確認_異常系] - fopen_s が呼び出されないこと。
+    EXPECT_CALL(mock_com_util, com_util_fopen(_, _, _))
+        .Times(0); // [Pre-Assert確認_異常系] - com_util_fopen が呼び出されないこと。
 
     // Act
     FILE *fp = com_util_fopen_fmt(NULL, NULL, "test_%d.txt", 1); // [手順] - modes に NULL を渡す。
@@ -47,11 +47,11 @@ TEST_F(fopenfTest, test_null_modes)
 TEST_F(fopenfTest, test_null_format)
 {
     // Arrange
-    Mock_stdio mock_stdio;
+    Mock_com_util mock_com_util;
 
     // Pre-Assert
-    EXPECT_CALL(mock_stdio, fopen(_, _, _, _, _))
-        .Times(0); // [Pre-Assert確認_異常系] - fopen が呼び出されないこと。
+    EXPECT_CALL(mock_com_util, com_util_fopen(_, _, _))
+        .Times(0); // [Pre-Assert確認_異常系] - com_util_fopen が呼び出されないこと。
 
     // Act
     FILE *fp = com_util_fopen_fmt("r", NULL, NULL); // [手順] - format に NULL を渡す。
@@ -63,11 +63,11 @@ TEST_F(fopenfTest, test_null_format)
 TEST_F(fopenfTest, test_null_format)
 {
     // Arrange
-    Mock_stdio mock_stdio;
+    Mock_com_util mock_com_util;
 
     // Pre-Assert
-    EXPECT_CALL(mock_stdio, fopen_s(_, _, _, _, _, _))
-        .Times(0); // [Pre-Assert確認_異常系] - fopen_s が呼び出されないこと。
+    EXPECT_CALL(mock_com_util, com_util_fopen(_, _, _))
+        .Times(0); // [Pre-Assert確認_異常系] - com_util_fopen が呼び出されないこと。
 
     // Act
     FILE *fp = com_util_fopen_fmt("r", NULL, NULL); // [手順] - format に NULL を渡す。
@@ -81,15 +81,15 @@ TEST_F(fopenfTest, test_null_format)
 TEST_F(fopenfTest, test_buffer_overflow)
 {
     // Arrange
-    Mock_stdio mock_stdio;
+    Mock_com_util mock_com_util;
     // 非常に長いファイル名を生成 (バッファサイズを超える)
     char long_string[5000];
     memset(long_string, 'a', sizeof(long_string) - 1);
     long_string[sizeof(long_string) - 1] = '\0';
 
     // Pre-Assert
-    EXPECT_CALL(mock_stdio, fopen(_, _, _, _, _))
-        .Times(0); // [Pre-Assert確認_異常系] - fopen が呼び出されないこと。
+    EXPECT_CALL(mock_com_util, com_util_fopen(_, _, _))
+        .Times(0); // [Pre-Assert確認_異常系] - com_util_fopen が呼び出されないこと。
 
     // Act
     FILE *fp = com_util_fopen_fmt("w", NULL, "%s.txt", long_string); // [手順] - バッファサイズを超えるファイル名を指定する。
@@ -101,15 +101,15 @@ TEST_F(fopenfTest, test_buffer_overflow)
 TEST_F(fopenfTest, test_buffer_overflow)
 {
     // Arrange
-    Mock_stdio mock_stdio;
+    Mock_com_util mock_com_util;
     // 非常に長いファイル名を生成 (バッファサイズを超える)
     char long_string[5000];
     memset(long_string, 'a', sizeof(long_string) - 1);
     long_string[sizeof(long_string) - 1] = '\0';
 
     // Pre-Assert
-    EXPECT_CALL(mock_stdio, fopen_s(_, _, _, _, _, _))
-        .Times(0); // [Pre-Assert確認_異常系] - fopen_s が呼び出されないこと。
+    EXPECT_CALL(mock_com_util, com_util_fopen(_, _, _))
+        .Times(0); // [Pre-Assert確認_異常系] - com_util_fopen が呼び出されないこと。
 
     // Act
     FILE *fp = com_util_fopen_fmt("w", NULL, "%s.txt", long_string); // [手順] - バッファサイズを超えるファイル名を指定する。
@@ -123,12 +123,12 @@ TEST_F(fopenfTest, test_buffer_overflow)
 TEST_F(fopenfTest, test_successful_call_with_format)
 {
     // Arrange
-    Mock_stdio mock_stdio;
+    Mock_com_util mock_com_util;
     FILE *expected_fp = (FILE *)(uintptr_t)0x12345678;
 
     // Pre-Assert
-    EXPECT_CALL(mock_stdio, fopen(_, _, _, StrEq("test_123.txt"), StrEq("r")))
-        .WillOnce(Return(expected_fp)); // [Pre-Assert確認_正常系] - fopen が正しくフォーマットされたファイル名で呼ばれること。
+    EXPECT_CALL(mock_com_util, com_util_fopen(StrEq("test_123.txt"), StrEq("r"), _))
+        .WillOnce(Return(expected_fp)); // [Pre-Assert確認_正常系] - com_util_fopen が正しくフォーマットされたファイル名で呼ばれること。
 
     // Act
     FILE *fp = com_util_fopen_fmt("r", NULL, "test_%d.txt", 123); // [手順] - com_util_fopen_fmt にフォーマット文字列でファイル名を指定する。
@@ -140,12 +140,12 @@ TEST_F(fopenfTest, test_successful_call_with_format)
 TEST_F(fopenfTest, test_successful_call_with_format)
 {
     // Arrange
-    Mock_stdio mock_stdio;
+    Mock_com_util mock_com_util;
     FILE *expected_fp = (FILE *)(uintptr_t)0x12345678;
 
     // Pre-Assert
-    EXPECT_CALL(mock_stdio, fopen_s(_, _, _, _, StrEq("test_123.txt"), StrEq("r")))
-        .WillOnce(DoAll(SetArgPointee<3>(expected_fp), Return(0))); // [Pre-Assert確認_正常系] - fopen_s が正しくフォーマットされたファイル名で呼ばれること。
+    EXPECT_CALL(mock_com_util, com_util_fopen(StrEq("test_123.txt"), StrEq("r"), _))
+        .WillOnce(Return(expected_fp)); // [Pre-Assert確認_正常系] - com_util_fopen が正しくフォーマットされたファイル名で呼ばれること。
 
     // Act
     FILE *fp = com_util_fopen_fmt("r", NULL, "test_%d.txt", 123); // [手順] - com_util_fopen_fmt にフォーマット文字列でファイル名を指定する。
@@ -159,12 +159,12 @@ TEST_F(fopenfTest, test_successful_call_with_format)
 TEST_F(fopenfTest, test_successful_call_with_multiple_parameters)
 {
     // Arrange
-    Mock_stdio mock_stdio;
+    Mock_com_util mock_com_util;
     FILE *expected_fp = (FILE *)(uintptr_t)0x87654321;
 
     // Pre-Assert
-    EXPECT_CALL(mock_stdio, fopen(_, _, _, StrEq("output_1_2_3.txt"), StrEq("w")))
-        .WillOnce(Return(expected_fp)); // [Pre-Assert確認_正常系] - fopen が正しくフォーマットされたファイル名で呼ばれること。
+    EXPECT_CALL(mock_com_util, com_util_fopen(StrEq("output_1_2_3.txt"), StrEq("w"), _))
+        .WillOnce(Return(expected_fp)); // [Pre-Assert確認_正常系] - com_util_fopen が正しくフォーマットされたファイル名で呼ばれること。
 
     // Act
     FILE *fp = com_util_fopen_fmt("w", NULL, "output_%d_%d_%d.txt", 1, 2, 3); // [手順] - com_util_fopen_fmt に複数のフォーマットパラメータを指定する。
@@ -176,12 +176,12 @@ TEST_F(fopenfTest, test_successful_call_with_multiple_parameters)
 TEST_F(fopenfTest, test_successful_call_with_multiple_parameters)
 {
     // Arrange
-    Mock_stdio mock_stdio;
+    Mock_com_util mock_com_util;
     FILE *expected_fp = (FILE *)(uintptr_t)0x87654321;
 
     // Pre-Assert
-    EXPECT_CALL(mock_stdio, fopen_s(_, _, _, _, StrEq("output_1_2_3.txt"), StrEq("w")))
-        .WillOnce(DoAll(SetArgPointee<3>(expected_fp), Return(0))); // [Pre-Assert確認_正常系] - fopen_s が正しくフォーマットされたファイル名で呼ばれること。
+    EXPECT_CALL(mock_com_util, com_util_fopen(StrEq("output_1_2_3.txt"), StrEq("w"), _))
+        .WillOnce(Return(expected_fp)); // [Pre-Assert確認_正常系] - com_util_fopen が正しくフォーマットされたファイル名で呼ばれること。
 
     // Act
     FILE *fp = com_util_fopen_fmt("w", NULL, "output_%d_%d_%d.txt", 1, 2, 3); // [手順] - com_util_fopen_fmt に複数のフォーマットパラメータを指定する。
@@ -195,12 +195,12 @@ TEST_F(fopenfTest, test_successful_call_with_multiple_parameters)
 TEST_F(fopenfTest, test_fopen_returns_null)
 {
     // Arrange
-    Mock_stdio mock_stdio;
+    Mock_com_util mock_com_util;
 
     // Pre-Assert
-    EXPECT_CALL(mock_stdio, fopen(_, _, _, StrEq("nonexistent.txt"), StrEq("r")))
-        .WillOnce(Return((FILE *)NULL)); // [Pre-Assert確認_異常系] - fopen が正しくフォーマットされたファイル名で呼ばれること。
-                                         // [Pre-Assert手順_異常系] - fopen から NULL を返す。
+    EXPECT_CALL(mock_com_util, com_util_fopen(StrEq("nonexistent.txt"), StrEq("r"), _))
+        .WillOnce(Return((FILE *)NULL)); // [Pre-Assert確認_異常系] - com_util_fopen が正しくフォーマットされたファイル名で呼ばれること。
+                                         // [Pre-Assert手順_異常系] - com_util_fopen から NULL を返す。
 
     // Act
     FILE *fp = com_util_fopen_fmt("r", NULL, "nonexistent.txt"); // [手順] - com_util_fopen_fmt を呼び出す。
@@ -212,12 +212,12 @@ TEST_F(fopenfTest, test_fopen_returns_null)
 TEST_F(fopenfTest, test_fopen_returns_null)
 {
     // Arrange
-    Mock_stdio mock_stdio;
+    Mock_com_util mock_com_util;
 
     // Pre-Assert
-    EXPECT_CALL(mock_stdio, fopen_s(_, _, _, _, StrEq("nonexistent.txt"), StrEq("r")))
-        .WillOnce(Return(ENOENT)); // [Pre-Assert確認_異常系] - fopen_s が正しくフォーマットされたファイル名で呼ばれること。
-                                   // [Pre-Assert手順_異常系] - fopen_s からエラーコードを返す。
+    EXPECT_CALL(mock_com_util, com_util_fopen(StrEq("nonexistent.txt"), StrEq("r"), _))
+        .WillOnce(Return((FILE *)NULL)); // [Pre-Assert確認_異常系] - com_util_fopen が正しくフォーマットされたファイル名で呼ばれること。
+                                         // [Pre-Assert手順_異常系] - com_util_fopen から NULL を返す。
 
     // Act
     FILE *fp = com_util_fopen_fmt("r", NULL, "nonexistent.txt"); // [手順] - com_util_fopen_fmt を呼び出す。
@@ -229,12 +229,12 @@ TEST_F(fopenfTest, test_fopen_returns_null)
 TEST_F(fopenfTest, test_fopen_s_access_denied)
 {
     // Arrange
-    Mock_stdio mock_stdio;
+    Mock_com_util mock_com_util;
 
     // Pre-Assert
-    EXPECT_CALL(mock_stdio, fopen_s(_, _, _, _, StrEq("protected.txt"), StrEq("w")))
-        .WillOnce(Return(EACCES)); // [Pre-Assert確認_異常系] - fopen_s が正しくフォーマットされたファイル名で呼ばれること。
-                                   // [Pre-Assert手順_異常系] - fopen_s からアクセス拒否エラーを返す。
+    EXPECT_CALL(mock_com_util, com_util_fopen(StrEq("protected.txt"), StrEq("w"), _))
+        .WillOnce(Return((FILE *)NULL)); // [Pre-Assert確認_異常系] - com_util_fopen が正しくフォーマットされたファイル名で呼ばれること。
+                                         // [Pre-Assert手順_異常系] - com_util_fopen から NULL を返す。
 
     // Act
     FILE *fp = com_util_fopen_fmt("w", NULL, "protected.txt"); // [手順] - com_util_fopen_fmt を呼び出す。
@@ -248,16 +248,13 @@ TEST_F(fopenfTest, test_fopen_s_access_denied)
 TEST_F(fopenfTest, test_fopen_returns_null_with_errno)
 {
     // Arrange
-    Mock_stdio mock_stdio;
+    Mock_com_util mock_com_util;
     int error_code = 0;
 
     // Pre-Assert
-    EXPECT_CALL(mock_stdio, fopen(_, _, _, StrEq("nonexistent.txt"), StrEq("r")))
-        .WillOnce(Invoke([](const char *, const int, const char *, const char *, const char *)
-                         {
-            errno = ENOENT;
-            return (FILE *)NULL; })); // [Pre-Assert確認_異常系] - fopen が正しくフォーマットされたファイル名で呼ばれること。
-                                // [Pre-Assert手順_異常系] - fopen から NULL を返し、errno に ENOENT を設定する。
+    EXPECT_CALL(mock_com_util, com_util_fopen(StrEq("nonexistent.txt"), StrEq("r"), _))
+        .WillOnce(DoAll(SetArgPointee<2>(ENOENT), Return((FILE *)NULL))); // [Pre-Assert確認_異常系] - com_util_fopen が正しくフォーマットされたファイル名で呼ばれること。
+                                                                          // [Pre-Assert手順_異常系] - com_util_fopen から NULL を返し、errno_out に ENOENT を設定する。
 
     // Act
     FILE *fp = com_util_fopen_fmt("r", &error_code, "nonexistent.txt"); // [手順] - com_util_fopen_fmt を呼び出し、エラーコードを取得する。
@@ -270,13 +267,13 @@ TEST_F(fopenfTest, test_fopen_returns_null_with_errno)
 TEST_F(fopenfTest, test_fopen_s_returns_error_with_errno)
 {
     // Arrange
-    Mock_stdio mock_stdio;
+    Mock_com_util mock_com_util;
     int error_code = 0;
 
     // Pre-Assert
-    EXPECT_CALL(mock_stdio, fopen_s(_, _, _, _, StrEq("nonexistent.txt"), StrEq("r")))
-        .WillOnce(Return(ENOENT)); // [Pre-Assert確認_異常系] - fopen_s が正しくフォーマットされたファイル名で呼ばれること。
-                                   // [Pre-Assert手順_異常系] - fopen_s からエラーコードを返す。
+    EXPECT_CALL(mock_com_util, com_util_fopen(StrEq("nonexistent.txt"), StrEq("r"), _))
+        .WillOnce(DoAll(SetArgPointee<2>(ENOENT), Return((FILE *)NULL))); // [Pre-Assert確認_異常系] - com_util_fopen が正しくフォーマットされたファイル名で呼ばれること。
+                                                                          // [Pre-Assert手順_異常系] - com_util_fopen から NULL を返し、errno_out に ENOENT を設定する。
 
     // Act
     FILE *fp = com_util_fopen_fmt("r", &error_code, "nonexistent.txt"); // [手順] - com_util_fopen_fmt を呼び出し、エラーコードを取得する。
@@ -291,13 +288,13 @@ TEST_F(fopenfTest, test_fopen_s_returns_error_with_errno)
 TEST_F(fopenfTest, test_fopen_success_errno_not_set)
 {
     // Arrange
-    Mock_stdio mock_stdio;
+    Mock_com_util mock_com_util;
     FILE *expected_fp = (FILE *)(uintptr_t)0x12345678;
     int error_code = 999; // 初期値を設定
 
     // Pre-Assert
-    EXPECT_CALL(mock_stdio, fopen(_, _, _, StrEq("success.txt"), StrEq("r")))
-        .WillOnce(Return(expected_fp)); // [Pre-Assert確認_正常系] - fopen が正しくフォーマットされたファイル名で呼ばれること。
+    EXPECT_CALL(mock_com_util, com_util_fopen(StrEq("success.txt"), StrEq("r"), _))
+        .WillOnce(Return(expected_fp)); // [Pre-Assert確認_正常系] - com_util_fopen が正しくフォーマットされたファイル名で呼ばれること。
 
     // Act
     FILE *fp = com_util_fopen_fmt("r", &error_code, "success.txt"); // [手順] - com_util_fopen_fmt を呼び出し、エラーコードポインタを渡す。
@@ -310,13 +307,13 @@ TEST_F(fopenfTest, test_fopen_success_errno_not_set)
 TEST_F(fopenfTest, test_fopen_s_success_errno_not_set)
 {
     // Arrange
-    Mock_stdio mock_stdio;
+    Mock_com_util mock_com_util;
     FILE *expected_fp = (FILE *)(uintptr_t)0x12345678;
     int error_code = 999; // 初期値を設定
 
     // Pre-Assert
-    EXPECT_CALL(mock_stdio, fopen_s(_, _, _, _, StrEq("success.txt"), StrEq("r")))
-        .WillOnce(DoAll(SetArgPointee<3>(expected_fp), Return(0))); // [Pre-Assert確認_正常系] - fopen_s が正しくフォーマットされたファイル名で呼ばれること。
+    EXPECT_CALL(mock_com_util, com_util_fopen(StrEq("success.txt"), StrEq("r"), _))
+        .WillOnce(Return(expected_fp)); // [Pre-Assert確認_正常系] - com_util_fopen が正しくフォーマットされたファイル名で呼ばれること。
 
     // Act
     FILE *fp = com_util_fopen_fmt("r", &error_code, "success.txt"); // [手順] - com_util_fopen_fmt を呼び出し、エラーコードポインタを渡す。
