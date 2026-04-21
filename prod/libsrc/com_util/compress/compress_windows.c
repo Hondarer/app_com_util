@@ -34,7 +34,7 @@
 
 #include <com_util/compress/compress.h>
 
-/* doxygen コメントはヘッダに記載 */
+/* doxygen コメントは、ヘッダに記載 */
 int com_util_compress(uint8_t       *dst,
                       size_t        *dst_len,
                       const uint8_t *src,
@@ -97,7 +97,7 @@ int com_util_compress(uint8_t       *dst,
     return 0;
 }
 
-/* doxygen コメントはヘッダに記載 */
+/* doxygen コメントは、ヘッダに記載 */
 int com_util_decompress(uint8_t       *dst,
                         size_t        *dst_len,
                         const uint8_t *src,

@@ -17,14 +17,14 @@
 
     #include <com_util/sync/sync.h>
 
-/* doxygen コメントはヘッダに記載 */
+/* doxygen コメントは、ヘッダに記載 */
 int com_util_condvar_timedwait(com_util_condvar_t *cv, com_util_mutex_t *mtx,
                                uint32_t timeout_ms)
 {
     return SleepConditionVariableCS(cv, mtx, (DWORD)timeout_ms) ? 0 : -1;
 }
 
-/* doxygen コメントはヘッダに記載 */
+/* doxygen コメントは、ヘッダに記載 */
 int com_util_thread_create(com_util_thread_t *thread,
                            com_util_thread_func_t func, void *arg)
 {
@@ -32,7 +32,7 @@ int com_util_thread_create(com_util_thread_t *thread,
     return (*thread == NULL) ? -1 : 0;
 }
 
-/* doxygen コメントはヘッダに記載 */
+/* doxygen コメントは、ヘッダに記載 */
 void com_util_thread_join(com_util_thread_t *thread)
 {
     if (*thread != NULL)

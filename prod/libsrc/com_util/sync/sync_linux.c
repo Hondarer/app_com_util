@@ -19,7 +19,7 @@
 
     #include <com_util/sync/sync.h>
 
-/* doxygen コメントはヘッダに記載 */
+/* doxygen コメントは、ヘッダに記載 */
 int com_util_condvar_timedwait(com_util_condvar_t *cv, com_util_mutex_t *mtx,
                                uint32_t timeout_ms)
 {
@@ -35,14 +35,14 @@ int com_util_condvar_timedwait(com_util_condvar_t *cv, com_util_mutex_t *mtx,
     return pthread_cond_timedwait(cv, mtx, &abs_ts);
 }
 
-/* doxygen コメントはヘッダに記載 */
+/* doxygen コメントは、ヘッダに記載 */
 int com_util_thread_create(com_util_thread_t *thread,
                            com_util_thread_func_t func, void *arg)
 {
     return pthread_create(thread, NULL, func, arg);
 }
 
-/* doxygen コメントはヘッダに記載 */
+/* doxygen コメントは、ヘッダに記載 */
 void com_util_thread_join(com_util_thread_t *thread)
 {
     pthread_join(*thread, NULL);
