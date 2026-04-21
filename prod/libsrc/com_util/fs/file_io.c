@@ -69,6 +69,7 @@ COM_UTIL_EXPORT FILE *COM_UTIL_API com_util_fopen(const char *path,
         wchar_t  wmodes[64];
         FILE    *fp  = NULL;
         errno_t  err;
+        size_t   converted;
 
         if (utf8_to_wpath(wpath, path) < 0)
         {
@@ -79,7 +80,9 @@ COM_UTIL_EXPORT FILE *COM_UTIL_API com_util_fopen(const char *path,
             return NULL;
         }
 
-        if (mbstowcs(wmodes, modes, sizeof(wmodes) / sizeof(wmodes[0])) == (size_t)-1)
+        err = mbstowcs_s(&converted, wmodes, sizeof(wmodes) / sizeof(wmodes[0]),
+                         modes, _TRUNCATE);
+        if (err != 0)
         {
             if (errno_out != NULL)
             {
