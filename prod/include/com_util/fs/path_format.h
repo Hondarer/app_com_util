@@ -17,17 +17,20 @@
 #include <stdarg.h>
 #include <stdint.h>
 #include <stdio.h>
-#include <sys/stat.h>
 #include <time.h>
 #include <com_util/base/platform.h>
+#include <com_util/fs/file_io.h>
 #include <com_util_export.h>
 
 /* プラットフォーム固有の stat 構造体の typedef */
+#ifndef COM_UTIL_FILE_STAT_T_DEFINED
+#define COM_UTIL_FILE_STAT_T_DEFINED
 #if defined(PLATFORM_LINUX)
 typedef struct stat util_file_stat_t;
 #elif defined(PLATFORM_WINDOWS)
 typedef struct _stat64 util_file_stat_t;
 #endif /* PLATFORM_ */
+#endif /* COM_UTIL_FILE_STAT_T_DEFINED */
 
 /* OS 固有のパス最大長を定義 */
 

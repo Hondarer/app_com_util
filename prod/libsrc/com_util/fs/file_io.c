@@ -5,12 +5,18 @@
 #include <string.h>
 
 #if defined(PLATFORM_LINUX)
+    #include <fcntl.h>
     #include <stdio.h>
+    #include <sys/stat.h>
+    #include <unistd.h>
 #elif defined(PLATFORM_WINDOWS)
     #include <com_util/base/windows_sdk.h>
-    #include <wchar.h>
+    #include <errno.h>
+    #include <fcntl.h>
+    #include <share.h>
     #include <stdio.h>
     #include <stdlib.h>
+    #include <wchar.h>
 #endif /* PLATFORM_ */
 
 /* ===== Windows 内部ヘルパー ===== */
@@ -102,6 +108,114 @@ COM_UTIL_EXPORT FILE *COM_UTIL_API com_util_fopen(const char *path,
         }
 
         return fp;
+    }
+#endif /* PLATFORM_ */
+}
+
+/* Doxygen コメントは、ヘッダに記載 */
+COM_UTIL_EXPORT int COM_UTIL_API com_util_stat(util_file_stat_t *buf,
+                                                const char       *path)
+{
+    if (buf == NULL || path == NULL)
+    {
+        return -1;
+    }
+
+#if defined(PLATFORM_LINUX)
+    return stat(path, buf);
+#elif defined(PLATFORM_WINDOWS)
+    {
+        wchar_t wpath[PLATFORM_PATH_MAX];
+
+        if (utf8_to_wpath(wpath, path) < 0)
+        {
+            return -1;
+        }
+
+        return _wstat64(wpath, buf);
+    }
+#endif /* PLATFORM_ */
+}
+
+/* Doxygen コメントは、ヘッダに記載 */
+COM_UTIL_EXPORT int COM_UTIL_API com_util_open(const char *path,
+                                                int         flags,
+                                                int         mode)
+{
+    if (path == NULL)
+    {
+        return -1;
+    }
+
+#if defined(PLATFORM_LINUX)
+    return open(path, flags, mode);
+#elif defined(PLATFORM_WINDOWS)
+    {
+        wchar_t wpath[PLATFORM_PATH_MAX];
+        int     fd = -1;
+        errno_t err;
+
+        if (utf8_to_wpath(wpath, path) < 0)
+        {
+            return -1;
+        }
+
+        err = _wsopen_s(&fd, wpath, flags, _SH_DENYNO, mode);
+        if (err != 0)
+        {
+            return -1;
+        }
+
+        return fd;
+    }
+#endif /* PLATFORM_ */
+}
+
+/* Doxygen コメントは、ヘッダに記載 */
+COM_UTIL_EXPORT int COM_UTIL_API com_util_access(const char *path,
+                                                  int         mode)
+{
+    if (path == NULL)
+    {
+        return -1;
+    }
+
+#if defined(PLATFORM_LINUX)
+    return access(path, mode);
+#elif defined(PLATFORM_WINDOWS)
+    {
+        wchar_t wpath[PLATFORM_PATH_MAX];
+
+        if (utf8_to_wpath(wpath, path) < 0)
+        {
+            return -1;
+        }
+
+        return _waccess(wpath, mode);
+    }
+#endif /* PLATFORM_ */
+}
+
+/* Doxygen コメントは、ヘッダに記載 */
+COM_UTIL_EXPORT int COM_UTIL_API com_util_mkdir(const char *path)
+{
+    if (path == NULL)
+    {
+        return -1;
+    }
+
+#if defined(PLATFORM_LINUX)
+    return mkdir(path, 0755);
+#elif defined(PLATFORM_WINDOWS)
+    {
+        wchar_t wpath[PLATFORM_PATH_MAX];
+
+        if (utf8_to_wpath(wpath, path) < 0)
+        {
+            return -1;
+        }
+
+        return _wmkdir(wpath);
     }
 #endif /* PLATFORM_ */
 }
