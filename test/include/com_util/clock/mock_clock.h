@@ -19,10 +19,18 @@ extern "C"
 
 #ifdef _IN_OVERRIDE_HEADER_COM_UTIL_CLOCK_H
 
+#ifndef CLOCK_GET_MONOTONIC_MS_NO_OVERRIDE
 #define clock_get_monotonic_ms() mock_clock_get_monotonic_ms()
+#endif /* !CLOCK_GET_MONOTONIC_MS_NO_OVERRIDE */
+
+#ifndef CLOCK_GET_REALTIME_UTC_NO_OVERRIDE
 #define clock_get_realtime_utc(utc_tm, tv_nsec) mock_clock_get_realtime_utc(utc_tm, tv_nsec)
+#endif /* !CLOCK_GET_REALTIME_UTC_NO_OVERRIDE */
+
+#ifndef CLOCK_GET_REALTIME_DEADLINE_MS_NO_OVERRIDE
 #define clock_get_realtime_deadline_ms(timeout_ms, abs_timeout) \
     mock_clock_get_realtime_deadline_ms(timeout_ms, abs_timeout)
+#endif /* !CLOCK_GET_REALTIME_DEADLINE_MS_NO_OVERRIDE */
 
 #else /* _IN_OVERRIDE_HEADER_COM_UTIL_CLOCK_H */
 
