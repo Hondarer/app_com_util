@@ -14,8 +14,8 @@
  */
 
 #include <com_util/clock/clock.h>
-#include <com_util/fs/file_io.h>
-#include <com_util/fs/path_max.h>
+#include <com_util/crt/path.h>
+#include <com_util/crt/stdio.h>
 #include <com_util/trace/trace_file.h>
 #include <stdio.h>
 #include <stdlib.h>

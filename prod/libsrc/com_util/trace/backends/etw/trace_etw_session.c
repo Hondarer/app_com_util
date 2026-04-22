@@ -65,7 +65,7 @@ static int parse_guid(const char *str, GUID *guid)
         return -1;
     }
 
-    n = sscanf_s(str,
+    n = sscanf(str,
         "%8x-%4x-%4x-%2x%2x-%2x%2x%2x%2x%2x%2x",
         &d[0], &d[1], &d[2], &d[3], &d[4],
         &d[5], &d[6], &d[7], &d[8], &d[9], &d[10]);

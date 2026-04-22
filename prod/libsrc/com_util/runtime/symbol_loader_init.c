@@ -17,9 +17,9 @@
  *
  *  - '#' で始まる行はコメント行として無視する。\n
  *  - 行中の '#' 以降を行末コメントとして切り捨てる。\n
- *  - sscanf で func_key / lib_name / func_name の 3 フィールドを解析する。\n
+ *  - com_util_scan_tokens3 で func_key / lib_name / func_name の 3 フィールドを解析する。\n
  *  - func_key が一致するキャッシュエントリの lib_name / func_name 配列に
- *    strncpy で書き込む。
+ *    com_util_strncpy で書き込む。
  *
  *  @copyright      Copyright (C) Tetsuo Honda. 2026. All rights reserved.
  *
@@ -27,8 +27,8 @@
  */
 
 #include <com_util/runtime/symbol_loader.h>
-#include <com_util/fs/file_io.h>
-#include <stdio.h>
+#include <com_util/crt/stdio.h>
+#include <com_util/crt/string.h>
 #include <string.h>
 
 /** fgets で読み込む行バッファの最大長 */
@@ -63,14 +63,10 @@ COM_UTIL_EXPORT void COM_UTIL_API symbol_loader_init(symbol_loader_entry_t *cons
         }
 
         /* func_key lib_name func_name の 3 フィールドを解析 */
-#if defined(PLATFORM_LINUX)
-        if (sscanf(line, "%255s %255s %255s", func_key, lib_name, func_name) != 3)
-#elif defined(PLATFORM_WINDOWS)
-        if (sscanf_s(line, "%255s %255s %255s",
-                     func_key, (unsigned)sizeof(func_key),
-                     lib_name, (unsigned)sizeof(lib_name),
-                     func_name, (unsigned)sizeof(func_name)) != 3)
-#endif /* PLATFORM_ */
+        if (com_util_scan_tokens3(line,
+                                  func_key, sizeof(func_key),
+                                  lib_name, sizeof(lib_name),
+                                  func_name, sizeof(func_name)) != 3)
         {
             /* 空行・コメント行・フィールドが不足している行はスキップ */
             continue;
@@ -85,15 +81,8 @@ COM_UTIL_EXPORT void COM_UTIL_API symbol_loader_init(symbol_loader_entry_t *cons
                 continue;
             }
 
-#if defined(PLATFORM_LINUX)
-            strncpy(cache->lib_name, lib_name, SYMBOL_LOADER_NAME_MAX - 1);
-            cache->lib_name[SYMBOL_LOADER_NAME_MAX - 1] = '\0';
-            strncpy(cache->func_name, func_name, SYMBOL_LOADER_NAME_MAX - 1);
-            cache->func_name[SYMBOL_LOADER_NAME_MAX - 1] = '\0';
-#elif defined(PLATFORM_WINDOWS)
-            strncpy_s(cache->lib_name, SYMBOL_LOADER_NAME_MAX, lib_name, SYMBOL_LOADER_NAME_MAX - 1);
-            strncpy_s(cache->func_name, SYMBOL_LOADER_NAME_MAX, func_name, SYMBOL_LOADER_NAME_MAX - 1);
-#endif /* PLATFORM_ */
+            (void)com_util_strncpy(cache->lib_name, SYMBOL_LOADER_NAME_MAX, lib_name, SYMBOL_LOADER_NAME_MAX - 1);
+            (void)com_util_strncpy(cache->func_name, SYMBOL_LOADER_NAME_MAX, func_name, SYMBOL_LOADER_NAME_MAX - 1);
             break;
         }
     }

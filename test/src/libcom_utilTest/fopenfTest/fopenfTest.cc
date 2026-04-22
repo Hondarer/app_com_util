@@ -1,6 +1,6 @@
 #include <testfw.h>
 #include <mock_com_util.h>
-#include <com_util/fs/path_format.h>
+#include <com_util/crt/stdio.h>
 #include <string.h>
 #include <errno.h>
 #include <stdint.h>

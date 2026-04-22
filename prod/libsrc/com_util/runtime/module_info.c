@@ -21,7 +21,8 @@
  */
 
 #include <com_util/runtime/module_info.h>
-#include <com_util/fs/path_max.h>
+#include <com_util/crt/path.h>
+#include <com_util/crt/string.h>
 #if defined(PLATFORM_LINUX)
     #include <dlfcn.h>
     #include <limits.h>
@@ -296,12 +297,12 @@ static get_lib_info_status_t get_self_path_w(wchar_t *out_w, size_t out_w_cap, c
         {
             if (wcslen(buf) + 1 > out_w_cap)
                 return MYLIB_ENOBUFS;
-            wcscpy_s(out_w, out_w_cap, buf);
+            (void)com_util_wcscpy(out_w, out_w_cap, buf);
             return MYLIB_OK;
         }
         if (wcslen(full) + 1 > out_w_cap)
             return MYLIB_ENOBUFS;
-        wcscpy_s(out_w, out_w_cap, full);
+        (void)com_util_wcscpy(out_w, out_w_cap, full);
         return MYLIB_OK;
     }
 }

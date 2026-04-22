@@ -1,6 +1,6 @@
 #include <testfw.h>
 #include <mock_com_util.h>
-#include <com_util/fs/path_format.h>
+#include <com_util/crt/sys/stat.h>
 #include <string.h>
 
 class statfTest : public Test

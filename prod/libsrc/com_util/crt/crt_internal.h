@@ -1,0 +1,24 @@
+#ifndef COM_UTIL_CRT_INTERNAL_H
+#define COM_UTIL_CRT_INTERNAL_H
+
+#include <com_util/base/platform.h>
+
+#if defined(PLATFORM_WINDOWS)
+    #include <com_util/base/windows_sdk.h>
+    #include <wchar.h>
+
+static int com_util_utf8_to_wpath(wchar_t *wbuf, size_t wbuf_count, const char *utf8_path)
+{
+    int n;
+
+    if (utf8_path == NULL || wbuf == NULL || wbuf_count == 0)
+    {
+        return -1;
+    }
+
+    n = MultiByteToWideChar(CP_UTF8, 0, utf8_path, -1, wbuf, (int)wbuf_count);
+    return (n <= 0) ? -1 : n;
+}
+#endif /* PLATFORM_WINDOWS */
+
+#endif /* COM_UTIL_CRT_INTERNAL_H */

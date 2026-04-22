@@ -1,50 +1,18 @@
-#include <com_util/fs/file_io.h>
-#include <com_util/fs/path_max.h>
+#include <com_util/crt/stdio.h>
+#include <com_util/crt/path.h>
+
+#include "crt_internal.h"
+
 #include <errno.h>
-#include <stdarg.h>
 #include <string.h>
 
 #if defined(PLATFORM_LINUX)
-    #include <fcntl.h>
-    #include <stdio.h>
-    #include <sys/stat.h>
-    #include <unistd.h>
+    #include <sys/types.h>
 #elif defined(PLATFORM_WINDOWS)
-    #include <com_util/base/windows_sdk.h>
-    #include <errno.h>
-    #include <fcntl.h>
-    #include <share.h>
-    #include <stdio.h>
     #include <stdlib.h>
     #include <wchar.h>
 #endif /* PLATFORM_ */
 
-/* ===== Windows 内部ヘルパー ===== */
-
-#if defined(PLATFORM_WINDOWS)
-
-/**
- *  UTF-8 文字列を wchar_t に変換してバッファへ格納する。
- *  変換後の文字数（NULL 含む）が PLATFORM_PATH_MAX を超える場合は -1 を返す。
- */
-static int utf8_to_wpath(wchar_t *wbuf, const char *utf8_path)
-{
-    int n;
-
-    if (utf8_path == NULL || wbuf == NULL)
-    {
-        return -1;
-    }
-
-    n = MultiByteToWideChar(CP_UTF8, 0, utf8_path, -1, wbuf, PLATFORM_PATH_MAX);
-    return (n <= 0) ? -1 : n;
-}
-
-#endif /* PLATFORM_WINDOWS */
-
-/* ===== ファイルパス系 ===== */
-
-/* Doxygen コメントは、ヘッダに記載 */
 COM_UTIL_EXPORT FILE *COM_UTIL_API com_util_fopen(const char *path,
                                                    const char *modes,
                                                    int        *errno_out)
@@ -77,7 +45,7 @@ COM_UTIL_EXPORT FILE *COM_UTIL_API com_util_fopen(const char *path,
         errno_t  err;
         size_t   converted;
 
-        if (utf8_to_wpath(wpath, path) < 0)
+        if (com_util_utf8_to_wpath(wpath, sizeof(wpath) / sizeof(wpath[0]), path) < 0)
         {
             if (errno_out != NULL)
             {
@@ -86,8 +54,7 @@ COM_UTIL_EXPORT FILE *COM_UTIL_API com_util_fopen(const char *path,
             return NULL;
         }
 
-        err = mbstowcs_s(&converted, wmodes, sizeof(wmodes) / sizeof(wmodes[0]),
-                         modes, _TRUNCATE);
+        err = mbstowcs_s(&converted, wmodes, sizeof(wmodes) / sizeof(wmodes[0]), modes, _TRUNCATE);
         if (err != 0)
         {
             if (errno_out != NULL)
@@ -112,115 +79,6 @@ COM_UTIL_EXPORT FILE *COM_UTIL_API com_util_fopen(const char *path,
 #endif /* PLATFORM_ */
 }
 
-/* Doxygen コメントは、ヘッダに記載 */
-COM_UTIL_EXPORT int COM_UTIL_API com_util_stat(util_file_stat_t *buf,
-                                                const char       *path)
-{
-    if (buf == NULL || path == NULL)
-    {
-        return -1;
-    }
-
-#if defined(PLATFORM_LINUX)
-    return stat(path, buf);
-#elif defined(PLATFORM_WINDOWS)
-    {
-        wchar_t wpath[PLATFORM_PATH_MAX];
-
-        if (utf8_to_wpath(wpath, path) < 0)
-        {
-            return -1;
-        }
-
-        return _wstat64(wpath, buf);
-    }
-#endif /* PLATFORM_ */
-}
-
-/* Doxygen コメントは、ヘッダに記載 */
-COM_UTIL_EXPORT int COM_UTIL_API com_util_open(const char *path,
-                                                int         flags,
-                                                int         mode)
-{
-    if (path == NULL)
-    {
-        return -1;
-    }
-
-#if defined(PLATFORM_LINUX)
-    return open(path, flags, mode);
-#elif defined(PLATFORM_WINDOWS)
-    {
-        wchar_t wpath[PLATFORM_PATH_MAX];
-        int     fd = -1;
-        errno_t err;
-
-        if (utf8_to_wpath(wpath, path) < 0)
-        {
-            return -1;
-        }
-
-        err = _wsopen_s(&fd, wpath, flags, _SH_DENYNO, mode);
-        if (err != 0)
-        {
-            return -1;
-        }
-
-        return fd;
-    }
-#endif /* PLATFORM_ */
-}
-
-/* Doxygen コメントは、ヘッダに記載 */
-COM_UTIL_EXPORT int COM_UTIL_API com_util_access(const char *path,
-                                                  int         mode)
-{
-    if (path == NULL)
-    {
-        return -1;
-    }
-
-#if defined(PLATFORM_LINUX)
-    return access(path, mode);
-#elif defined(PLATFORM_WINDOWS)
-    {
-        wchar_t wpath[PLATFORM_PATH_MAX];
-
-        if (utf8_to_wpath(wpath, path) < 0)
-        {
-            return -1;
-        }
-
-        return _waccess(wpath, mode);
-    }
-#endif /* PLATFORM_ */
-}
-
-/* Doxygen コメントは、ヘッダに記載 */
-COM_UTIL_EXPORT int COM_UTIL_API com_util_mkdir(const char *path)
-{
-    if (path == NULL)
-    {
-        return -1;
-    }
-
-#if defined(PLATFORM_LINUX)
-    return mkdir(path, 0755);
-#elif defined(PLATFORM_WINDOWS)
-    {
-        wchar_t wpath[PLATFORM_PATH_MAX];
-
-        if (utf8_to_wpath(wpath, path) < 0)
-        {
-            return -1;
-        }
-
-        return _wmkdir(wpath);
-    }
-#endif /* PLATFORM_ */
-}
-
-/* Doxygen コメントは、ヘッダに記載 */
 COM_UTIL_EXPORT int COM_UTIL_API com_util_remove(const char *path)
 {
     if (path == NULL)
@@ -234,7 +92,7 @@ COM_UTIL_EXPORT int COM_UTIL_API com_util_remove(const char *path)
     {
         wchar_t wpath[PLATFORM_PATH_MAX];
 
-        if (utf8_to_wpath(wpath, path) < 0)
+        if (com_util_utf8_to_wpath(wpath, sizeof(wpath) / sizeof(wpath[0]), path) < 0)
         {
             return -1;
         }
@@ -244,7 +102,6 @@ COM_UTIL_EXPORT int COM_UTIL_API com_util_remove(const char *path)
 #endif /* PLATFORM_ */
 }
 
-/* Doxygen コメントは、ヘッダに記載 */
 COM_UTIL_EXPORT int COM_UTIL_API com_util_rename(const char *oldpath,
                                                   const char *newpath)
 {
@@ -260,17 +117,16 @@ COM_UTIL_EXPORT int COM_UTIL_API com_util_rename(const char *oldpath,
         wchar_t woldpath[PLATFORM_PATH_MAX];
         wchar_t wnewpath[PLATFORM_PATH_MAX];
 
-        if (utf8_to_wpath(woldpath, oldpath) < 0)
+        if (com_util_utf8_to_wpath(woldpath, sizeof(woldpath) / sizeof(woldpath[0]), oldpath) < 0)
         {
             return -1;
         }
 
-        if (utf8_to_wpath(wnewpath, newpath) < 0)
+        if (com_util_utf8_to_wpath(wnewpath, sizeof(wnewpath) / sizeof(wnewpath[0]), newpath) < 0)
         {
             return -1;
         }
 
-        /* POSIX rename() と同じく移動先が存在しても上書きする */
         if (!MoveFileExW(woldpath, wnewpath, MOVEFILE_REPLACE_EXISTING))
         {
             return -1;
@@ -280,15 +136,11 @@ COM_UTIL_EXPORT int COM_UTIL_API com_util_rename(const char *oldpath,
 #endif /* PLATFORM_ */
 }
 
-/* ===== ストリーム操作系 ===== */
-
-/* Doxygen コメントは、ヘッダに記載 */
 COM_UTIL_EXPORT int COM_UTIL_API com_util_fclose(FILE *stream)
 {
     return fclose(stream);
 }
 
-/* Doxygen コメントは、ヘッダに記載 */
 COM_UTIL_EXPORT size_t COM_UTIL_API com_util_fread(void  *ptr,
                                                     size_t size,
                                                     size_t count,
@@ -297,7 +149,6 @@ COM_UTIL_EXPORT size_t COM_UTIL_API com_util_fread(void  *ptr,
     return fread(ptr, size, count, stream);
 }
 
-/* Doxygen コメントは、ヘッダに記載 */
 COM_UTIL_EXPORT size_t COM_UTIL_API com_util_fwrite(const void *ptr,
                                                      size_t      size,
                                                      size_t      count,
@@ -306,7 +157,6 @@ COM_UTIL_EXPORT size_t COM_UTIL_API com_util_fwrite(const void *ptr,
     return fwrite(ptr, size, count, stream);
 }
 
-/* Doxygen コメントは、ヘッダに記載 */
 COM_UTIL_EXPORT char *COM_UTIL_API com_util_fgets(char *buf,
                                                    int   size,
                                                    FILE *stream)
@@ -314,14 +164,12 @@ COM_UTIL_EXPORT char *COM_UTIL_API com_util_fgets(char *buf,
     return fgets(buf, size, stream);
 }
 
-/* Doxygen コメントは、ヘッダに記載 */
 COM_UTIL_EXPORT int COM_UTIL_API com_util_fputs(const char *str,
                                                  FILE       *stream)
 {
     return fputs(str, stream);
 }
 
-/* Doxygen コメントは、ヘッダに記載 */
 COM_UTIL_EXPORT int COM_UTIL_API com_util_fprintf(FILE       *stream,
                                                    const char *format,
                                                    ...)
@@ -336,7 +184,6 @@ COM_UTIL_EXPORT int COM_UTIL_API com_util_fprintf(FILE       *stream,
     return result;
 }
 
-/* Doxygen コメントは、ヘッダに記載 */
 COM_UTIL_EXPORT int COM_UTIL_API com_util_vfprintf(FILE       *stream,
                                                     const char *format,
                                                     va_list     args)
@@ -348,37 +195,31 @@ COM_UTIL_EXPORT int COM_UTIL_API com_util_vfprintf(FILE       *stream,
 #endif /* PLATFORM_ */
 }
 
-/* Doxygen コメントは、ヘッダに記載 */
 COM_UTIL_EXPORT int COM_UTIL_API com_util_fflush(FILE *stream)
 {
     return fflush(stream);
 }
 
-/* Doxygen コメントは、ヘッダに記載 */
 COM_UTIL_EXPORT int COM_UTIL_API com_util_feof(FILE *stream)
 {
     return feof(stream);
 }
 
-/* Doxygen コメントは、ヘッダに記載 */
 COM_UTIL_EXPORT int COM_UTIL_API com_util_ferror(FILE *stream)
 {
     return ferror(stream);
 }
 
-/* Doxygen コメントは、ヘッダに記載 */
 COM_UTIL_EXPORT void COM_UTIL_API com_util_clearerr(FILE *stream)
 {
     clearerr(stream);
 }
 
-/* Doxygen コメントは、ヘッダに記載 */
 COM_UTIL_EXPORT void COM_UTIL_API com_util_rewind(FILE *stream)
 {
     rewind(stream);
 }
 
-/* Doxygen コメントは、ヘッダに記載 */
 COM_UTIL_EXPORT int COM_UTIL_API com_util_fseek(FILE   *stream,
                                                  int64_t offset,
                                                  int     whence)
@@ -390,7 +231,6 @@ COM_UTIL_EXPORT int COM_UTIL_API com_util_fseek(FILE   *stream,
 #endif /* PLATFORM_ */
 }
 
-/* Doxygen コメントは、ヘッダに記載 */
 COM_UTIL_EXPORT int64_t COM_UTIL_API com_util_ftell(FILE *stream)
 {
 #if defined(PLATFORM_LINUX)

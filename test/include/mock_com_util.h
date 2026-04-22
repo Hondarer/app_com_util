@@ -6,7 +6,10 @@
 #include <time.h>
 #include <com_util/compress/compress.h>
 #include <com_util/crypto/crypto.h>
-#include <com_util/fs/file_io.h>
+#include <com_util/crt/fcntl.h>
+#include <com_util/crt/stdio.h>
+#include <com_util/crt/sys/stat.h>
+#include <com_util/crt/unistd.h>
 #include <com_util/trace/trace.h>
 
 class Mock_com_util
@@ -25,7 +28,7 @@ public:
                  const uint8_t *, const uint8_t *, const uint8_t *, size_t));
     MOCK_METHOD(int, com_util_passphrase_to_key, (uint8_t *, const uint8_t *, size_t));
 
-    // file_io
+    // crt
     MOCK_METHOD(FILE *, com_util_fopen,  (const char *, const char *, int *));
     MOCK_METHOD(int,    com_util_stat,   (util_file_stat_t *, const char *));
     MOCK_METHOD(int,    com_util_open,   (const char *, int, int));

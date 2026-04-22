@@ -206,7 +206,7 @@ extern "C"
      *
      *  @par            スレッド セーフティ
      *  本関数はスレッドセーフです。\n
-     *  実装はスレッドセーフな UTC 変換 API (`gmtime_r` / `gmtime_s`) を使用します。
+     *  実装は CRT 抽象 API (`com_util_gmtime`) を使用します。
      *
      *  @note           `utc_tm` は UTC であり、ローカルタイムではありません。
      *

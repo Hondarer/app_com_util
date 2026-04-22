@@ -1,0 +1,30 @@
+#include <com_util/crt/time.h>
+
+#include <string.h>
+
+#include <com_util/base/platform.h>
+
+COM_UTIL_EXPORT int COM_UTIL_API com_util_gmtime(struct tm *utc_tm,
+                                                  const time_t *timep)
+{
+    if (utc_tm == NULL || timep == NULL)
+    {
+        return -1;
+    }
+
+#if defined(PLATFORM_LINUX)
+    if (gmtime_r(timep, utc_tm) == NULL)
+    {
+        memset(utc_tm, 0, sizeof(*utc_tm));
+        return -1;
+    }
+    return 0;
+#elif defined(PLATFORM_WINDOWS)
+    if (gmtime_s(utc_tm, timep) != 0)
+    {
+        memset(utc_tm, 0, sizeof(*utc_tm));
+        return -1;
+    }
+    return 0;
+#endif /* PLATFORM_ */
+}

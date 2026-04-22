@@ -1,6 +1,7 @@
 # テスト対象のソースファイル
 TEST_SRCS := \
-    $(MYAPP_DIR)/prod/libsrc/com_util/clock/clock.c
+    $(MYAPP_DIR)/prod/libsrc/com_util/clock/clock.c \
+    $(MYAPP_DIR)/prod/libsrc/com_util/crt/time.c
 
 # clock の override を無効化し、本物の実装を直接検証する
 DEFINES += \

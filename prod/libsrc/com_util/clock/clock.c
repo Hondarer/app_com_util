@@ -13,6 +13,7 @@
 
 #include <com_util/base/platform.h>
 #include <com_util/clock/clock.h>
+#include <com_util/crt/time.h>
 #include <string.h>
 
 #if defined(PLATFORM_LINUX)
@@ -88,23 +89,13 @@ void clock_get_realtime_utc(struct tm *utc_tm, int32_t *tv_nsec)
 
     clock_get_realtime(&realtime_sec, tv_nsec);
 
-#if defined(PLATFORM_LINUX)
     {
         time_t realtime_time = (time_t)realtime_sec;
-        if (gmtime_r(&realtime_time, utc_tm) == NULL)
+        if (com_util_gmtime(utc_tm, &realtime_time) != 0)
         {
             memset(utc_tm, 0, sizeof(*utc_tm));
         }
     }
-#elif defined(PLATFORM_WINDOWS)
-    {
-        time_t realtime_time = (time_t)realtime_sec;
-        if (gmtime_s(utc_tm, &realtime_time) != 0)
-        {
-            memset(utc_tm, 0, sizeof(*utc_tm));
-        }
-    }
-#endif /* PLATFORM_ */
 }
 
 /* doxygen コメントは、ヘッダに記載 */

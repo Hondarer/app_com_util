@@ -1,27 +1,20 @@
 /**
  *******************************************************************************
- *  @file           path_max.h
- *  @brief          OS 固有のパス最大長マクロのヘッダーファイル。
+ *  @file           path.h
+ *  @brief          CRT 抽象層で使用するパス関連定義。
  *  @author         Tetsuo Honda
- *  @date           2026/04/04
+ *  @date           2026/04/22
  *
  *  プラットフォームに依存せず、OS のパス最大長を表す定数 @ref PLATFORM_PATH_MAX
  *  を提供します。
- *
- *  @section        platform_path_max PLATFORM_PATH_MAX の展開先
- *
- *  | プラットフォーム | 展開先                                     |
- *  | ---------------- | ------------------------------------------ |
- *  | Linux / macOS    | `<limits.h>` の `PATH_MAX`（通常 4096）    |
- *  | Windows          | `<windows.h>` の `MAX_PATH`（= 260）       |
  *
  *  @copyright      Copyright (C) Tetsuo Honda. 2026. All rights reserved.
  *
  *******************************************************************************
  */
 
-#ifndef PATH_MAX_H
-#define PATH_MAX_H
+#ifndef COM_UTIL_CRT_PATH_H
+#define COM_UTIL_CRT_PATH_H
 
 #include <com_util/base/platform.h>
 
@@ -29,8 +22,6 @@
     /**
      *  @def            PLATFORM_PATH_MAX
      *  @brief          OS 固有のパス最大長。
-     *  @details        Linux / macOS では `limits.h` の `PATH_MAX`、
-     *                  Windows では `windows.h` の `MAX_PATH` に展開されます。
      */
     #define PLATFORM_PATH_MAX 4096
 #else /* !DOXYGEN */
@@ -43,4 +34,4 @@
     #endif /* PLATFORM_ */
 #endif     /* DOXYGEN */
 
-#endif /* PATH_MAX_H */
+#endif /* COM_UTIL_CRT_PATH_H */

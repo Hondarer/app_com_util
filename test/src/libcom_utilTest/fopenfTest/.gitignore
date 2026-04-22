@@ -1,1 +1,3 @@
 /path_format.c
+/path_format_internal.c
+/stdio_format.c

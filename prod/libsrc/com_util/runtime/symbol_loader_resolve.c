@@ -22,6 +22,7 @@
  */
 
 #include <com_util/runtime/symbol_loader.h>
+#include <com_util/crt/string.h>
 #include <string.h>
 
 /* doxygen コメントは、ヘッダに記載 */
@@ -93,13 +94,8 @@ COM_UTIL_EXPORT void *COM_UTIL_API symbol_loader_resolve(symbol_loader_entry_t *
 #endif /* COMPILER_GCC */
             goto unlock;
         }
-#if defined(PLATFORM_LINUX)
-        strcpy(lib_with_ext, fobj->lib_name);
-        strcat(lib_with_ext, ext);
-#elif defined(PLATFORM_WINDOWS)
-        strcpy_s(lib_with_ext, sizeof(lib_with_ext), fobj->lib_name);
-        strcat_s(lib_with_ext, sizeof(lib_with_ext), ext);
-#endif /* PLATFORM_ */
+        (void)com_util_strcpy(lib_with_ext, sizeof(lib_with_ext), fobj->lib_name);
+        (void)com_util_strcat(lib_with_ext, sizeof(lib_with_ext), ext);
 
 #if defined(PLATFORM_LINUX)
         fobj->handle = dlopen(lib_with_ext, RTLD_LAZY);
