@@ -10,4 +10,4 @@ DEFINES += \
     COM_UTIL_GET_REALTIME_DEADLINE_MS_NO_OVERRIDE
 
 # ライブラリの指定
-LIBS += mock_libc mock_com_util clock com_util
+LIBS += mock_libc mock_com_util com_util

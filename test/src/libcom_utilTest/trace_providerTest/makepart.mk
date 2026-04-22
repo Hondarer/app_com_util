@@ -18,4 +18,4 @@ LIBSDIR += \
     $(MYAPP_DIR)/test/lib
 
 # ライブラリの指定
-LIBS += mock_libc mock_com_util clock com_util
+LIBS += mock_libc mock_com_util com_util
