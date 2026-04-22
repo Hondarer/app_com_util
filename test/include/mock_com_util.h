@@ -68,9 +68,9 @@ public:
     MOCK_METHOD(trace_level_t, trace_logger_get_stderr_level, (trace_logger_t *));
 
     // clock
-    MOCK_METHOD(uint64_t, clock_get_monotonic_ms, ());
-    MOCK_METHOD(void, clock_get_realtime_utc, (struct tm *, int32_t *));
-    MOCK_METHOD(void, clock_get_realtime_deadline_ms, (uint64_t, struct timespec *));
+    MOCK_METHOD(uint64_t, com_util_get_monotonic_ms, ());
+    MOCK_METHOD(void, com_util_get_realtime_utc, (struct tm *, int32_t *));
+    MOCK_METHOD(void, com_util_get_realtime_deadline_ms, (uint64_t, struct timespec *));
 
     Mock_com_util();
     ~Mock_com_util();

@@ -44,8 +44,8 @@ static int capture_matching_realtime_snapshot(struct tm *utc_tm, int32_t *utc_ns
         int32_t realtime_nsec_candidate;
         time_t realtime_time;
 
-        clock_get_realtime_utc(&utc_candidate, &utc_nsec_candidate);
-        clock_get_realtime(&realtime_sec_candidate, &realtime_nsec_candidate);
+        com_util_get_realtime_utc(&utc_candidate, &utc_nsec_candidate);
+        com_util_get_realtime(&realtime_sec_candidate, &realtime_nsec_candidate);
         realtime_time = (time_t)realtime_sec_candidate;
 
 #if defined(PLATFORM_WINDOWS)
@@ -80,7 +80,7 @@ TEST_F(clockTest, test_realtime_utc_returns_valid_range)
     struct tm utc_tm;
     int32_t utc_nsec;
 
-    clock_get_realtime_utc(&utc_tm, &utc_nsec);
+    com_util_get_realtime_utc(&utc_tm, &utc_nsec);
 
     EXPECT_GE(utc_tm.tm_year, 120);
     EXPECT_GE(utc_tm.tm_mon, 0);
@@ -138,9 +138,9 @@ TEST_F(clockTest, test_realtime_deadline_ms_advances_requested_timeout)
     int64_t after_ns;
     int64_t deadline_ns;
 
-    clock_get_realtime(&before_sec, &before_nsec);
-    clock_get_realtime_deadline_ms(timeout_ms, &abs_timeout);
-    clock_get_realtime(&after_sec, &after_nsec);
+    com_util_get_realtime(&before_sec, &before_nsec);
+    com_util_get_realtime_deadline_ms(timeout_ms, &abs_timeout);
+    com_util_get_realtime(&after_sec, &after_nsec);
 
     before_ns = to_epoch_ns(before_sec, before_nsec);
     after_ns = to_epoch_ns(after_sec, after_nsec);

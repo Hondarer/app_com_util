@@ -429,13 +429,13 @@ static int config_lock_shared_timed(trace_logger_t *handle)
 {
 #if defined(PLATFORM_LINUX)
     struct timespec abs_timeout;
-    clock_get_realtime_deadline_ms(LOCK_TIMEOUT_MS, &abs_timeout);
+    com_util_get_realtime_deadline_ms(LOCK_TIMEOUT_MS, &abs_timeout);
     return (pthread_rwlock_timedrdlock(&handle->config_rwlock, &abs_timeout) == 0) ? 0 : -1;
 #elif defined(PLATFORM_WINDOWS)
-    uint64_t deadline = clock_get_monotonic_ms() + (uint64_t)LOCK_TIMEOUT_MS;
+    uint64_t deadline = com_util_get_monotonic_ms() + (uint64_t)LOCK_TIMEOUT_MS;
     while (!TryAcquireSRWLockShared(&handle->config_rwlock))
     {
-        if (clock_get_monotonic_ms() >= deadline)
+        if (com_util_get_monotonic_ms() >= deadline)
         {
             return -1;
         }
@@ -801,7 +801,7 @@ static void write_stderr_entry(trace_level_t level, const char *msg)
     struct tm utc_tm;
     int32_t tv_nsec;
 
-    clock_get_realtime_utc(&utc_tm, &tv_nsec);
+    com_util_get_realtime_utc(&utc_tm, &tv_nsec);
 
 #if defined(COMPILER_GCC)
 #pragma GCC diagnostic push

@@ -37,7 +37,7 @@ static void clock_fill_timespec(struct timespec *ts, int64_t tv_sec, int32_t tv_
 }
 
 /* doxygen コメントは、ヘッダに記載 */
-uint64_t clock_get_monotonic_ms(void)
+uint64_t com_util_get_monotonic_ms(void)
 {
 #if defined(PLATFORM_LINUX)
     struct timespec ts;
@@ -49,7 +49,7 @@ uint64_t clock_get_monotonic_ms(void)
 }
 
 /* doxygen コメントは、ヘッダに記載 */
-void clock_get_monotonic(int64_t *tv_sec, int32_t *tv_nsec)
+void com_util_get_monotonic(int64_t *tv_sec, int32_t *tv_nsec)
 {
 #if defined(PLATFORM_LINUX)
     struct timespec ts;
@@ -64,7 +64,7 @@ void clock_get_monotonic(int64_t *tv_sec, int32_t *tv_nsec)
 }
 
 /* doxygen コメントは、ヘッダに記載 */
-void clock_get_realtime(int64_t *tv_sec, int32_t *tv_nsec)
+void com_util_get_realtime(int64_t *tv_sec, int32_t *tv_nsec)
 {
 #if defined(PLATFORM_LINUX)
     struct timespec ts;
@@ -83,11 +83,11 @@ void clock_get_realtime(int64_t *tv_sec, int32_t *tv_nsec)
 }
 
 /* doxygen コメントは、ヘッダに記載 */
-void clock_get_realtime_utc(struct tm *utc_tm, int32_t *tv_nsec)
+void com_util_get_realtime_utc(struct tm *utc_tm, int32_t *tv_nsec)
 {
     int64_t realtime_sec;
 
-    clock_get_realtime(&realtime_sec, tv_nsec);
+    com_util_get_realtime(&realtime_sec, tv_nsec);
 
     {
         time_t realtime_time = (time_t)realtime_sec;
@@ -99,12 +99,12 @@ void clock_get_realtime_utc(struct tm *utc_tm, int32_t *tv_nsec)
 }
 
 /* doxygen コメントは、ヘッダに記載 */
-void clock_get_realtime_deadline_ms(uint64_t timeout_ms, struct timespec *abs_timeout)
+void com_util_get_realtime_deadline_ms(uint64_t timeout_ms, struct timespec *abs_timeout)
 {
     int64_t deadline_sec;
     int32_t deadline_nsec;
 
-    clock_get_realtime(&deadline_sec, &deadline_nsec);
+    com_util_get_realtime(&deadline_sec, &deadline_nsec);
 
     deadline_sec += (int64_t)(timeout_ms / MSEC_PER_SEC);
     deadline_nsec += (int32_t)((timeout_ms % MSEC_PER_SEC) * NSEC_PER_MSEC);

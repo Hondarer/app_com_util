@@ -58,12 +58,12 @@ Mock_com_util::Mock_com_util()
         .WillByDefault(Return(TRACE_LEVEL_NONE));
     ON_CALL(*this, trace_logger_get_stderr_level(_))
         .WillByDefault(Return(TRACE_LEVEL_NONE));
-    ON_CALL(*this, clock_get_monotonic_ms())
-        .WillByDefault(Invoke(delegate_real_clock_get_monotonic_ms));
-    ON_CALL(*this, clock_get_realtime_utc(_, _))
-        .WillByDefault(Invoke(delegate_real_clock_get_realtime_utc));
-    ON_CALL(*this, clock_get_realtime_deadline_ms(_, _))
-        .WillByDefault(Invoke(delegate_real_clock_get_realtime_deadline_ms));
+    ON_CALL(*this, com_util_get_monotonic_ms())
+        .WillByDefault(Invoke(delegate_real_com_util_get_monotonic_ms));
+    ON_CALL(*this, com_util_get_realtime_utc(_, _))
+        .WillByDefault(Invoke(delegate_real_com_util_get_realtime_utc));
+    ON_CALL(*this, com_util_get_realtime_deadline_ms(_, _))
+        .WillByDefault(Invoke(delegate_real_com_util_get_realtime_deadline_ms));
 
     _mock_com_util = this;
 }

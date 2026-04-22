@@ -115,9 +115,9 @@ static void format_timestamp(char *buf, int buf_size)
     struct tm utc_tm;
     int32_t tv_nsec;
 
-    clock_get_realtime_utc(&utc_tm, &tv_nsec);
+    com_util_get_realtime_utc(&utc_tm, &tv_nsec);
 
-    /* -Wformat-truncation の抑制: clock_get_realtime_utc() が返す tm 構造体の各フィールドは
+    /* -Wformat-truncation の抑制: com_util_get_realtime_utc() が返す tm 構造体の各フィールドは
      * UTC 分解済みの正規化値であり (tm_mon: 0-11, tm_mday: 1-31 等)、出力は常に
      * 23 文字以内に収まる。GCC は int 型の理論上の最大範囲 [-2147483648, 2147483647]
      * を使って静的検証するため false positive が発生する。pragma はその誤報を局所的に
@@ -398,7 +398,7 @@ COM_UTIL_EXPORT int COM_UTIL_API trace_file_sink_write(trace_file_sink_t *handle
 #if defined(PLATFORM_LINUX)
     {
         struct timespec abs_timeout;
-        clock_get_realtime_deadline_ms(FILE_LOCK_TIMEOUT_MS, &abs_timeout);
+        com_util_get_realtime_deadline_ms(FILE_LOCK_TIMEOUT_MS, &abs_timeout);
         if (pthread_mutex_timedlock(&handle->mutex, &abs_timeout) != 0)
         {
             return -1;
@@ -406,10 +406,10 @@ COM_UTIL_EXPORT int COM_UTIL_API trace_file_sink_write(trace_file_sink_t *handle
     }
 #elif defined(PLATFORM_WINDOWS)
     {
-        uint64_t deadline = clock_get_monotonic_ms() + (uint64_t)FILE_LOCK_TIMEOUT_MS;
+        uint64_t deadline = com_util_get_monotonic_ms() + (uint64_t)FILE_LOCK_TIMEOUT_MS;
         while (!TryEnterCriticalSection(&handle->cs))
         {
-            if (clock_get_monotonic_ms() >= deadline)
+            if (com_util_get_monotonic_ms() >= deadline)
             {
                 return -1;
             }

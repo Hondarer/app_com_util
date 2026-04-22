@@ -47,16 +47,16 @@ TEST_F(clock_overrideTest, test_without_mock_object_uses_real_delegate)
     int64_t after_ns;
     int64_t deadline_ns;
 
-    clock_get_realtime(&before_sec, &before_nsec);
-    mock_clock_get_realtime_utc(&utc_tm, &utc_nsec);
-    mock_clock_get_realtime_deadline_ms(100, &abs_timeout);
-    clock_get_realtime(&after_sec, &after_nsec);
+    com_util_get_realtime(&before_sec, &before_nsec);
+    mock_com_util_get_realtime_utc(&utc_tm, &utc_nsec);
+    mock_com_util_get_realtime_deadline_ms(100, &abs_timeout);
+    com_util_get_realtime(&after_sec, &after_nsec);
 
     before_ns = to_epoch_ns(before_sec, before_nsec);
     after_ns = to_epoch_ns(after_sec, after_nsec);
     deadline_ns = timespec_to_epoch_ns(&abs_timeout);
 
-    EXPECT_GT(mock_clock_get_monotonic_ms(), 0U);
+    EXPECT_GT(mock_com_util_get_monotonic_ms(), 0U);
     expect_valid_utc_snapshot(&utc_tm, utc_nsec);
     EXPECT_GE(abs_timeout.tv_nsec, 0L);
     EXPECT_LT(abs_timeout.tv_nsec, 1000000000L);
@@ -71,16 +71,16 @@ TEST_F(clock_overrideTest, test_mock_default_action_uses_real_delegate)
     struct timespec abs_timeout;
     int32_t utc_nsec = -1;
 
-    EXPECT_CALL(mock_com_util, clock_get_monotonic_ms())
+    EXPECT_CALL(mock_com_util, com_util_get_monotonic_ms())
         .Times(1);
-    EXPECT_CALL(mock_com_util, clock_get_realtime_utc(_, _))
+    EXPECT_CALL(mock_com_util, com_util_get_realtime_utc(_, _))
         .Times(1);
-    EXPECT_CALL(mock_com_util, clock_get_realtime_deadline_ms(100, _))
+    EXPECT_CALL(mock_com_util, com_util_get_realtime_deadline_ms(100, _))
         .Times(1);
 
-    EXPECT_GT(mock_clock_get_monotonic_ms(), 0U);
-    mock_clock_get_realtime_utc(&utc_tm, &utc_nsec);
-    mock_clock_get_realtime_deadline_ms(100, &abs_timeout);
+    EXPECT_GT(mock_com_util_get_monotonic_ms(), 0U);
+    mock_com_util_get_realtime_utc(&utc_tm, &utc_nsec);
+    mock_com_util_get_realtime_deadline_ms(100, &abs_timeout);
 
     expect_valid_utc_snapshot(&utc_tm, utc_nsec);
     EXPECT_GE(abs_timeout.tv_nsec, 0L);
@@ -94,9 +94,9 @@ TEST_F(clock_overrideTest, test_mock_explicit_override_returns_configured_values
     struct timespec abs_timeout = {};
     int32_t utc_nsec = 0;
 
-    EXPECT_CALL(mock_com_util, clock_get_monotonic_ms())
+    EXPECT_CALL(mock_com_util, com_util_get_monotonic_ms())
         .WillOnce(Return(1234U));
-    EXPECT_CALL(mock_com_util, clock_get_realtime_utc(_, _))
+    EXPECT_CALL(mock_com_util, com_util_get_realtime_utc(_, _))
         .WillOnce([](struct tm *utc_tm_arg, int32_t *tv_nsec_arg)
         {
             utc_tm_arg->tm_year = 126;
@@ -107,7 +107,7 @@ TEST_F(clock_overrideTest, test_mock_explicit_override_returns_configured_values
             utc_tm_arg->tm_sec = 56;
             *tv_nsec_arg = 789012345;
         });
-    EXPECT_CALL(mock_com_util, clock_get_realtime_deadline_ms(250, _))
+    EXPECT_CALL(mock_com_util, com_util_get_realtime_deadline_ms(250, _))
         .WillOnce([](uint64_t timeout_ms, struct timespec *abs_timeout_arg)
         {
             EXPECT_EQ(250U, timeout_ms);
@@ -115,9 +115,9 @@ TEST_F(clock_overrideTest, test_mock_explicit_override_returns_configured_values
             abs_timeout_arg->tv_nsec = 456000000L;
         });
 
-    EXPECT_EQ(1234U, mock_clock_get_monotonic_ms());
+    EXPECT_EQ(1234U, mock_com_util_get_monotonic_ms());
 
-    mock_clock_get_realtime_utc(&utc_tm, &utc_nsec);
+    mock_com_util_get_realtime_utc(&utc_tm, &utc_nsec);
     EXPECT_EQ(126, utc_tm.tm_year);
     EXPECT_EQ(3, utc_tm.tm_mon);
     EXPECT_EQ(20, utc_tm.tm_mday);
@@ -126,7 +126,7 @@ TEST_F(clock_overrideTest, test_mock_explicit_override_returns_configured_values
     EXPECT_EQ(56, utc_tm.tm_sec);
     EXPECT_EQ(789012345, utc_nsec);
 
-    mock_clock_get_realtime_deadline_ms(250, &abs_timeout);
+    mock_com_util_get_realtime_deadline_ms(250, &abs_timeout);
     EXPECT_EQ(123, abs_timeout.tv_sec);
     EXPECT_EQ(456000000L, abs_timeout.tv_nsec);
 }

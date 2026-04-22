@@ -14,7 +14,7 @@
  *
  *  | 項目                  | 単調増加クロック               | 実時刻クロック                        |
  *  | --------------------- | ------------------------------ | ------------------------------------- |
- *  | 対応関数              | clock_get_monotonic_ms()\n clock_get_monotonic() | clock_get_realtime() |
+ *  | 対応関数              | com_util_get_monotonic_ms()\n com_util_get_monotonic() | com_util_get_realtime() |
  *  | 基準点                | 起動時 (不定)                  | Unix epoch (1970-01-01T00:00:00Z)     |
  *  | NTP 補正の影響        | 受けない                       | 受ける (時刻が前後する可能性あり)     |
  *  | 値の単調増加          | 保証される                     | 保証されない                          |
@@ -26,13 +26,13 @@
  *
  *  @section        clock_usage 使い分けの指針
  *
- *  - **経過時間を測る・タイムアウトを判定する** → clock_get_monotonic_ms() または clock_get_monotonic() を使用する。\n
+ *  - **経過時間を測る・タイムアウトを判定する** → com_util_get_monotonic_ms() または com_util_get_monotonic() を使用する。\n
  *    実時刻クロックは NTP 補正でジャンプするため、差分計算が正しく行えない場合がある。
- *  - **実時刻を記録・外部と共有する** → clock_get_realtime() を使用する。\n
+ *  - **実時刻を記録・外部と共有する** → com_util_get_realtime() を使用する。\n
  *    セッション開始時刻・ログのタイムスタンプなど、カレンダー時刻として意味を持つ場合に限定する。
- *  - **現在の UTC を分解済みで扱う** → clock_get_realtime_utc() を使用する。\n
+ *  - **現在の UTC を分解済みで扱う** → com_util_get_realtime_utc() を使用する。\n
  *    ログのタイムスタンプ書式化など、年月日時分秒に分解して扱う用途に使用する。
- *  - **実時刻 deadline を作る** → clock_get_realtime_deadline_ms() を使用する。\n
+ *  - **実時刻 deadline を作る** → com_util_get_realtime_deadline_ms() を使用する。\n
  *    `pthread_mutex_timedlock()` など絶対時刻 deadline を要求する API へ渡す値を生成する。
  *
  *  @copyright      Copyright (C) Tetsuo Honda. 2026. All rights reserved.
@@ -61,7 +61,7 @@ extern "C"
      *  @details
      *  OS の単調増加クロック (CLOCK_MONOTONIC 相当) を読み取り、ミリ秒に変換して返します。\n
      *  タイムアウト判定・差分計算など ms 精度で十分な用途に使用します。\n
-     *  より高い精度が必要な場合は clock_get_monotonic() を使用してください。
+     *  より高い精度が必要な場合は com_util_get_monotonic() を使用してください。
      *
      *  返す値の特性:
      *
@@ -72,7 +72,7 @@ extern "C"
      *  | 精度                  | ナノ秒 (ms に切り捨て)           | ～15 ms (ハードウェア依存)       |
      *  | オーバーフロー        | 実質なし (uint64_t)              | 実質なし (uint64_t, ～5.8 億年)  |
      *
-     *  Table: clock_get_monotonic_ms の返す値の特性
+     *  Table: com_util_get_monotonic_ms の返す値の特性
      *
      *  @par            スレッド セーフティ
      *  本関数はスレッドセーフです。\n
@@ -82,19 +82,19 @@ extern "C"
      *
      *  @remarks        Windows では GetTickCount64() の分解能がハードウェアに依存し、
      *                  通常 15 ms 程度です。1 ms 未満の精度が必要な場合は
-     *                  clock_get_monotonic() を使用してください。
+     *                  com_util_get_monotonic() を使用してください。
      *
      *  使用例:
      *  @code{.c}
-        uint64_t deadline = clock_get_monotonic_ms() + 500; // 500 ms タイムアウト
-        while (clock_get_monotonic_ms() < deadline)
+        uint64_t deadline = com_util_get_monotonic_ms() + 500; // 500 ms タイムアウト
+        while (com_util_get_monotonic_ms() < deadline)
         {
             // 処理
         }
      *  @endcode
      *******************************************************************************
      */
-    COM_UTIL_EXPORT uint64_t COM_UTIL_API clock_get_monotonic_ms(void);
+    COM_UTIL_EXPORT uint64_t COM_UTIL_API com_util_get_monotonic_ms(void);
 
     /**
      *******************************************************************************
@@ -115,7 +115,7 @@ extern "C"
      *  | tv_sec の精度         | ナノ秒                           | ミリ秒 (tv_nsec は ms 単位で格納) |
      *  | tv_nsec の範囲        | 0 ～ 999,999,999                 | 0 ～ 999,000,000 (1 ms 刻み)      |
      *
-     *  Table: clock_get_monotonic の返す値の特性
+     *  Table: com_util_get_monotonic の返す値の特性
      *
      *  @par            スレッド セーフティ
      *  本関数はスレッドセーフです。\n
@@ -127,7 +127,7 @@ extern "C"
      *                  tv_nsec の有効桁は ms 単位 (1,000,000 ns 刻み) になります。
      *                  ms 以上の精度が必要な場合は QueryPerformanceCounter() の利用を検討してください。
      *
-     *  @remarks        ms 精度で十分な場合は clock_get_monotonic_ms() の使用を推奨します。
+     *  @remarks        ms 精度で十分な場合は com_util_get_monotonic_ms() の使用を推奨します。
      *
      *  使用例 (経過ナノ秒を算出):
      *  @code{.c}
@@ -135,15 +135,15 @@ extern "C"
         int32_t  nsec0, nsec1;
         int64_t  elapsed_ns;
 
-        clock_get_monotonic(&sec0, &nsec0);
+        com_util_get_monotonic(&sec0, &nsec0);
         // ... 計測対象の処理 ...
-        clock_get_monotonic(&sec1, &nsec1);
+        com_util_get_monotonic(&sec1, &nsec1);
 
         elapsed_ns = (sec1 - sec0) * 1000000000LL + (nsec1 - nsec0);
      *  @endcode
      *******************************************************************************
      */
-    COM_UTIL_EXPORT void COM_UTIL_API clock_get_monotonic(int64_t *tv_sec, int32_t *tv_nsec);
+    COM_UTIL_EXPORT void COM_UTIL_API com_util_get_monotonic(int64_t *tv_sec, int32_t *tv_nsec);
 
     /**
      *******************************************************************************
@@ -165,7 +165,7 @@ extern "C"
      *  | 精度                  | ナノ秒                          | 100 ナノ秒 (tv_nsec は 100 ns 刻み)   |
      *  | NTP 補正の影響        | 受ける                          | 受ける                                |
      *
-     *  Table: clock_get_realtime の返す値の特性
+     *  Table: com_util_get_realtime の返す値の特性
      *
      *  @par            スレッド セーフティ
      *  本関数はスレッドセーフです。\n
@@ -174,7 +174,7 @@ extern "C"
      *  @warning        **経過時間の測定やタイムアウト判定には使用しないでください。**\n
      *                  NTP 補正や管理者による手動設定で時刻が前後する場合があり、
      *                  差分が負値になるなど正しい結果が得られないことがあります。\n
-     *                  経過時間の測定には clock_get_monotonic_ms() または clock_get_monotonic() を使用してください。
+     *                  経過時間の測定には com_util_get_monotonic_ms() または com_util_get_monotonic() を使用してください。
      *
      *  @note           Windows では FILETIME (100 ns 単位、1601-01-01 起算) を内部で使用し、
      *                  Unix epoch へ変換しています。変換オフセットは 11,644,473,600 秒
@@ -187,12 +187,12 @@ extern "C"
         int64_t  session_sec;
         int32_t  session_nsec;
 
-        clock_get_realtime(&session_sec, &session_nsec);
+        com_util_get_realtime(&session_sec, &session_nsec);
         // session_sec / session_nsec を構造体に保存して識別子として使用する
      *  @endcode
      *******************************************************************************
      */
-    COM_UTIL_EXPORT void COM_UTIL_API clock_get_realtime(int64_t *tv_sec, int32_t *tv_nsec);
+    COM_UTIL_EXPORT void COM_UTIL_API com_util_get_realtime(int64_t *tv_sec, int32_t *tv_nsec);
 
     /**
      *******************************************************************************
@@ -215,12 +215,12 @@ extern "C"
         struct tm utc_tm;
         int32_t   nsec;
 
-        clock_get_realtime_utc(&utc_tm, &nsec);
+        com_util_get_realtime_utc(&utc_tm, &nsec);
         // utc_tm と nsec を使って "YYYY-MM-DD HH:MM:SS.mmm" を組み立てる
      *  @endcode
      *******************************************************************************
      */
-    COM_UTIL_EXPORT void COM_UTIL_API clock_get_realtime_utc(struct tm *utc_tm, int32_t *tv_nsec);
+    COM_UTIL_EXPORT void COM_UTIL_API com_util_get_realtime_utc(struct tm *utc_tm, int32_t *tv_nsec);
 
     /**
      *******************************************************************************
@@ -244,12 +244,12 @@ extern "C"
      *  @code{.c}
         struct timespec deadline;
 
-        clock_get_realtime_deadline_ms(100, &deadline);
+        com_util_get_realtime_deadline_ms(100, &deadline);
         pthread_mutex_timedlock(&mutex, &deadline);
      *  @endcode
      *******************************************************************************
      */
-    COM_UTIL_EXPORT void COM_UTIL_API clock_get_realtime_deadline_ms(uint64_t timeout_ms, struct timespec *abs_timeout);
+    COM_UTIL_EXPORT void COM_UTIL_API com_util_get_realtime_deadline_ms(uint64_t timeout_ms, struct timespec *abs_timeout);
 
 #ifdef __cplusplus
 }
