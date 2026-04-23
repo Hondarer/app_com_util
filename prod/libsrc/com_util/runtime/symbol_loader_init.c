@@ -17,7 +17,7 @@
  *
  *  - '#' で始まる行はコメント行として無視する。\n
  *  - 行中の '#' 以降を行末コメントとして切り捨てる。\n
- *  - com_util_scan_tokens3 で func_key / lib_name / func_name の 3 フィールドを解析する。\n
+ *  - com_util_sscanf で func_key / lib_name / func_name の 3 フィールドを解析する。\n
  *  - func_key が一致するキャッシュエントリの lib_name / func_name 配列に
  *    com_util_strncpy で書き込む。
  *
@@ -29,6 +29,7 @@
 #include <com_util/runtime/symbol_loader.h>
 #include <com_util/crt/stdio.h>
 #include <com_util/crt/string.h>
+#include <stdio.h>
 #include <string.h>
 
 /** fgets で読み込む行バッファの最大長 */
@@ -44,6 +45,7 @@ COM_UTIL_EXPORT void COM_UTIL_API symbol_loader_init(symbol_loader_entry_t *cons
     char func_key[SYMBOL_LOADER_NAME_MAX];
     char lib_name[SYMBOL_LOADER_NAME_MAX];
     char func_name[SYMBOL_LOADER_NAME_MAX];
+    char scan_format[32];
     char *comment;
     size_t fobj_index;
 
@@ -52,6 +54,11 @@ COM_UTIL_EXPORT void COM_UTIL_API symbol_loader_init(symbol_loader_entry_t *cons
     {
         return;
     }
+
+    (void)snprintf(scan_format, sizeof(scan_format), "%%%zus %%%zus %%%zus",
+                   sizeof(func_key) - 1,
+                   sizeof(lib_name) - 1,
+                   sizeof(func_name) - 1);
 
     while (com_util_fgets(line, sizeof(line), fp) != NULL)
     {
@@ -63,10 +70,7 @@ COM_UTIL_EXPORT void COM_UTIL_API symbol_loader_init(symbol_loader_entry_t *cons
         }
 
         /* func_key lib_name func_name の 3 フィールドを解析 */
-        if (com_util_scan_tokens3(line,
-                                  func_key, sizeof(func_key),
-                                  lib_name, sizeof(lib_name),
-                                  func_name, sizeof(func_name)) != 3)
+        if (com_util_sscanf(line, scan_format, func_key, lib_name, func_name) != 3)
         {
             /* 空行・コメント行・フィールドが不足している行はスキップ */
             continue;

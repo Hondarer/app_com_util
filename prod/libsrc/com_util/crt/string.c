@@ -112,11 +112,7 @@ COM_UTIL_EXPORT int COM_UTIL_API com_util_vsscanf(const char *buffer,
                                                    const char *format,
                                                    va_list args)
 {
-#if defined(COMPILER_MSVC)
-    return vsscanf_s(buffer, format, args);
-#else
     return vsscanf(buffer, format, args);
-#endif /* COMPILER_MSVC */
 }
 
 COM_UTIL_EXPORT int COM_UTIL_API com_util_sscanf(const char *buffer,
@@ -130,84 +126,4 @@ COM_UTIL_EXPORT int COM_UTIL_API com_util_sscanf(const char *buffer,
     result = com_util_vsscanf(buffer, format, args);
     va_end(args);
     return result;
-}
-
-static const char *skip_space(const char *p)
-{
-    while (*p == ' ' || *p == '\t' || *p == '\r' || *p == '\n' ||
-           *p == '\v' || *p == '\f')
-    {
-        p++;
-    }
-    return p;
-}
-
-static int copy_token(const char **cursor, char *dest, size_t dest_size)
-{
-    const char *start;
-    size_t len;
-
-    if (dest == NULL || dest_size == 0)
-    {
-        return -1;
-    }
-
-    start = skip_space(*cursor);
-    len = 0;
-    while (start[len] != '\0' &&
-           start[len] != ' ' && start[len] != '\t' &&
-           start[len] != '\r' && start[len] != '\n' &&
-           start[len] != '\v' && start[len] != '\f')
-    {
-        len++;
-    }
-
-    if (len == 0 || len >= dest_size)
-    {
-        dest[0] = '\0';
-        return -1;
-    }
-
-    memcpy(dest, start, len);
-    dest[len] = '\0';
-    *cursor = start + len;
-    return 0;
-}
-
-COM_UTIL_EXPORT int COM_UTIL_API com_util_scan_tokens3(const char *text,
-                                                        char *token1,
-                                                        size_t token1_size,
-                                                        char *token2,
-                                                        size_t token2_size,
-                                                        char *token3,
-                                                        size_t token3_size)
-{
-    const char *cursor;
-    int count = 0;
-
-    if (text == NULL)
-    {
-        return 0;
-    }
-
-    cursor = text;
-    if (copy_token(&cursor, token1, token1_size) != 0)
-    {
-        return count;
-    }
-    count++;
-
-    if (copy_token(&cursor, token2, token2_size) != 0)
-    {
-        return count;
-    }
-    count++;
-
-    if (copy_token(&cursor, token3, token3_size) != 0)
-    {
-        return count;
-    }
-    count++;
-
-    return count;
 }

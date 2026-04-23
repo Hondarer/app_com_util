@@ -57,14 +57,6 @@ extern "C"
 #endif /* COMPILER_GCC */
         ;
 
-    COM_UTIL_EXPORT int COM_UTIL_API com_util_scan_tokens3(const char *text,
-                                                            char *token1,
-                                                            size_t token1_size,
-                                                            char *token2,
-                                                            size_t token2_size,
-                                                            char *token3,
-                                                            size_t token3_size);
-
 #ifdef __cplusplus
 }
 #endif /* __cplusplus */

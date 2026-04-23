@@ -56,16 +56,13 @@ TEST_F(crt_stringTest, strcat_success)
     EXPECT_STREQ("abcdef", buf);
 }
 
-TEST_F(crt_stringTest, scan_tokens3_success)
+TEST_F(crt_stringTest, sscanf_reads_three_tokens)
 {
     char token1[8];
     char token2[8];
     char token3[8];
 
-    int count = com_util_scan_tokens3("one two three",
-                                      token1, sizeof(token1),
-                                      token2, sizeof(token2),
-                                      token3, sizeof(token3));
+    int count = com_util_sscanf("one two three", "%7s %7s %7s", token1, token2, token3);
 
     EXPECT_EQ(3, count);
     EXPECT_STREQ("one", token1);
@@ -73,16 +70,37 @@ TEST_F(crt_stringTest, scan_tokens3_success)
     EXPECT_STREQ("three", token3);
 }
 
-TEST_F(crt_stringTest, scan_tokens3_short_input)
+TEST_F(crt_stringTest, sscanf_returns_partial_count_for_short_input)
 {
     char token1[8];
     char token2[8];
     char token3[8];
 
-    int count = com_util_scan_tokens3("one two",
-                                      token1, sizeof(token1),
-                                      token2, sizeof(token2),
-                                      token3, sizeof(token3));
+    int count = com_util_sscanf("one two", "%7s %7s %7s", token1, token2, token3);
 
     EXPECT_EQ(2, count);
+}
+
+TEST_F(crt_stringTest, sscanf_skips_repeated_spaces)
+{
+    char token1[8];
+    char token2[8];
+    char token3[8];
+
+    int count = com_util_sscanf("  one   two\tthree", "%7s %7s %7s", token1, token2, token3);
+
+    EXPECT_EQ(3, count);
+    EXPECT_STREQ("one", token1);
+    EXPECT_STREQ("two", token2);
+    EXPECT_STREQ("three", token3);
+}
+
+TEST_F(crt_stringTest, sscanf_respects_width_limit)
+{
+    char token[4];
+
+    int count = com_util_sscanf("abcdef", "%3s", token);
+
+    EXPECT_EQ(1, count);
+    EXPECT_STREQ("abc", token);
 }
