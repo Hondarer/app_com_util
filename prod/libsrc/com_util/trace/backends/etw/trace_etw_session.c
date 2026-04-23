@@ -2,17 +2,17 @@
 
 #if defined(PLATFORM_WINDOWS)
 
-#include <com_util/base/windows_sdk.h>
-#include <evntrace.h>
-#include <evntcons.h>
-#pragma comment(lib, "Advapi32.lib")
-#include <com_util/trace/trace_etw.h>
-#include <stdlib.h>
-#include <stdio.h>
+    #include <com_util/base/windows_sdk.h>
+    #include <evntcons.h>
+    #include <evntrace.h>
+    #pragma comment(lib, "Advapi32.lib")
+    #include <com_util/trace/trace_etw.h>
+    #include <stdio.h>
+    #include <stdlib.h>
 
-#ifndef INVALID_PROCESSTRACE_HANDLE
-#define INVALID_PROCESSTRACE_HANDLE ((TRACEHANDLE)INVALID_HANDLE_VALUE)
-#endif /* INVALID_PROCESSTRACE_HANDLE */
+    #ifndef INVALID_PROCESSTRACE_HANDLE
+        #define INVALID_PROCESSTRACE_HANDLE ((TRACEHANDLE)INVALID_HANDLE_VALUE)
+    #endif /* INVALID_PROCESSTRACE_HANDLE */
 
 /**
  *  @brief  ETW セッション構造体 (内部定義)。
@@ -65,10 +65,14 @@ static int parse_guid(const char *str, GUID *guid)
         return -1;
     }
 
-    n = sscanf(str,
-        "%8x-%4x-%4x-%2x%2x-%2x%2x%2x%2x%2x%2x",
-        &d[0], &d[1], &d[2], &d[3], &d[4],
-        &d[5], &d[6], &d[7], &d[8], &d[9], &d[10]);
+    #if defined(COMPILER_GCC)
+    n = sscanf(str, "%8x-%4x-%4x-%2x%2x-%2x%2x%2x%2x%2x%2x", &d[0], &d[1], &d[2], &d[3], &d[4], &d[5], &d[6], &d[7],
+               &d[8], &d[9], &d[10]);
+    #elif defined(COMPILER_MSVC)
+    n = sscanf_s(str, "%8x-%4x-%4x-%2x%2x-%2x%2x%2x%2x%2x%2x", &d[0], &d[1], &d[2], &d[3], &d[4], &d[5], &d[6], &d[7],
+                 &d[8], &d[9], &d[10]);
+    #endif /* COMPILER_GCC */
+
     if (n != 11)
     {
         return -1;
@@ -93,16 +97,9 @@ static int parse_guid(const char *str, GUID *guid)
  */
 static int guid_equal(const GUID *a, const GUID *b)
 {
-    return a->Data1 == b->Data1 &&
-           a->Data2 == b->Data2 &&
-           a->Data3 == b->Data3 &&
-           a->Data4[0] == b->Data4[0] &&
-           a->Data4[1] == b->Data4[1] &&
-           a->Data4[2] == b->Data4[2] &&
-           a->Data4[3] == b->Data4[3] &&
-           a->Data4[4] == b->Data4[4] &&
-           a->Data4[5] == b->Data4[5] &&
-           a->Data4[6] == b->Data4[6] &&
+    return a->Data1 == b->Data1 && a->Data2 == b->Data2 && a->Data3 == b->Data3 && a->Data4[0] == b->Data4[0] &&
+           a->Data4[1] == b->Data4[1] && a->Data4[2] == b->Data4[2] && a->Data4[3] == b->Data4[3] &&
+           a->Data4[4] == b->Data4[4] && a->Data4[5] == b->Data4[5] && a->Data4[6] == b->Data4[6] &&
            a->Data4[7] == b->Data4[7];
 }
 
@@ -168,8 +165,7 @@ static void set_status(int *out_status, int value)
     }
 }
 
-COM_UTIL_EXPORT int COM_UTIL_API
-    trace_etw_session_check_access(void)
+COM_UTIL_EXPORT int COM_UTIL_API trace_etw_session_check_access(void)
 {
     static const wchar_t probe_name[] = L"EtwUtil_AccessProbe";
     size_t props_size;
@@ -178,8 +174,7 @@ COM_UTIL_EXPORT int COM_UTIL_API
     ULONG status;
     int result;
 
-    props_size = sizeof(EVENT_TRACE_PROPERTIES)
-               + sizeof(probe_name);
+    props_size = sizeof(EVENT_TRACE_PROPERTIES) + sizeof(probe_name);
     props = (EVENT_TRACE_PROPERTIES *)malloc(props_size);
     if (props == NULL)
     {
@@ -213,12 +208,10 @@ COM_UTIL_EXPORT int COM_UTIL_API
     return result;
 }
 
-COM_UTIL_EXPORT trace_etw_session_t *COM_UTIL_API
-    trace_etw_session_start(const char *session_name,
-                      const char *provider_guid_str,
-                      trace_etw_event_callback_t callback,
-                      void *context,
-                      int *out_status)
+COM_UTIL_EXPORT trace_etw_session_t *COM_UTIL_API trace_etw_session_start(const char *session_name,
+                                                                          const char *provider_guid_str,
+                                                                          trace_etw_event_callback_t callback,
+                                                                          void *context, int *out_status)
 {
     trace_etw_session_t *session = NULL;
     GUID provider_guid;
@@ -271,8 +264,7 @@ COM_UTIL_EXPORT trace_etw_session_t *COM_UTIL_API
         set_status(out_status, TRACE_ETW_SESSION_ERR_SYSTEM);
         goto cleanup;
     }
-    MultiByteToWideChar(CP_UTF8, 0, session_name, -1,
-                        session->session_name_w, name_len_w);
+    MultiByteToWideChar(CP_UTF8, 0, session_name, -1, session->session_name_w, name_len_w);
 
     /* EVENT_TRACE_PROPERTIES を確保 (セッション名領域を含む) */
     props_size = sizeof(EVENT_TRACE_PROPERTIES) + ((size_t)name_len_w * sizeof(wchar_t));
@@ -292,9 +284,7 @@ COM_UTIL_EXPORT trace_etw_session_t *COM_UTIL_API
     session->properties->LoggerNameOffset = sizeof(EVENT_TRACE_PROPERTIES);
     session->properties->FlushTimer = 1;
 
-    status = StartTraceW(&session->session_handle,
-                         session->session_name_w,
-                         session->properties);
+    status = StartTraceW(&session->session_handle, session->session_name_w, session->properties);
 
     if (status == ERROR_ACCESS_DENIED)
     {
@@ -312,10 +302,7 @@ COM_UTIL_EXPORT trace_etw_session_t *COM_UTIL_API
 
     /* プロバイダを有効化 */
     etp.Version = ENABLE_TRACE_PARAMETERS_VERSION_2;
-    status = EnableTraceEx2(session->session_handle,
-                            &provider_guid,
-                            EVENT_CONTROL_CODE_ENABLE_PROVIDER,
-                            5,
+    status = EnableTraceEx2(session->session_handle, &provider_guid, EVENT_CONTROL_CODE_ENABLE_PROVIDER, 5,
                             0xFFFFFFFFFFFFFFFF, 0, 0, &etp);
     if (status != ERROR_SUCCESS)
     {
@@ -327,8 +314,7 @@ COM_UTIL_EXPORT trace_etw_session_t *COM_UTIL_API
     {
         EVENT_TRACE_LOGFILEW trace_logfile = {0};
         trace_logfile.LoggerName = session->session_name_w;
-        trace_logfile.ProcessTraceMode =
-            PROCESS_TRACE_MODE_REAL_TIME | PROCESS_TRACE_MODE_EVENT_RECORD;
+        trace_logfile.ProcessTraceMode = PROCESS_TRACE_MODE_REAL_TIME | PROCESS_TRACE_MODE_EVENT_RECORD;
         trace_logfile.EventRecordCallback = event_record_callback;
         trace_logfile.Context = session;
 
@@ -340,8 +326,7 @@ COM_UTIL_EXPORT trace_etw_session_t *COM_UTIL_API
         goto cleanup;
     }
 
-    session->thread_handle = CreateThread(
-        NULL, 0, trace_thread_proc, session, 0, NULL);
+    session->thread_handle = CreateThread(NULL, 0, trace_thread_proc, session, 0, NULL);
     if (session->thread_handle == NULL)
     {
         set_status(out_status, TRACE_ETW_SESSION_ERR_SYSTEM);
@@ -360,8 +345,7 @@ cleanup:
         }
         if (session->session_handle != 0)
         {
-            ControlTraceW(session->session_handle, NULL,
-                          session->properties, EVENT_TRACE_CONTROL_STOP);
+            ControlTraceW(session->session_handle, NULL, session->properties, EVENT_TRACE_CONTROL_STOP);
         }
         free(session->session_name_w);
         free(session->properties);
@@ -370,8 +354,7 @@ cleanup:
     return NULL;
 }
 
-COM_UTIL_EXPORT void COM_UTIL_API
-    trace_etw_session_stop(trace_etw_session_t *session)
+COM_UTIL_EXPORT void COM_UTIL_API trace_etw_session_stop(trace_etw_session_t *session)
 {
     if (session == NULL)
     {
@@ -381,8 +364,7 @@ COM_UTIL_EXPORT void COM_UTIL_API
     /* セッション停止 (バッファフラッシュ → ProcessTrace が残イベントを処理して戻る) */
     if (session->session_handle != 0 && session->properties != NULL)
     {
-        ControlTraceW(session->session_handle, NULL,
-                      session->properties, EVENT_TRACE_CONTROL_STOP);
+        ControlTraceW(session->session_handle, NULL, session->properties, EVENT_TRACE_CONTROL_STOP);
     }
 
     /* ワーカースレッド join */
