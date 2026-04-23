@@ -2,3 +2,4 @@
 /trace_etw.c
 /trace_file.c
 /trace_syslog.c
+/native_file.c

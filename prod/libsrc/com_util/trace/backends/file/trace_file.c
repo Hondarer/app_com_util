@@ -14,6 +14,7 @@
  */
 
 #include <com_util/clock/clock.h>
+#include <com_util/crt/native_file.h>
 #include <com_util/crt/path.h>
 #include <com_util/crt/stdio.h>
 #include <com_util/trace/trace_file.h>
@@ -24,12 +25,8 @@
 #include "trace_file_internal.h"
 
 #if defined(PLATFORM_LINUX)
-    #include <fcntl.h>
     #include <limits.h>
     #include <pthread.h>
-    #include <sys/stat.h>
-    #include <sys/types.h>
-    #include <unistd.h>
 #endif /* PLATFORM_LINUX */
 
 /* ===== 内部定数 ===== */
@@ -63,8 +60,6 @@ struct trace_file_sink
     int generations;
 
 #if defined(PLATFORM_LINUX)
-    /** ファイルディスクリプタ。-1 = 未開。 */
-    int fd;
     /** スレッド安全のための mutex。 */
     pthread_mutex_t mutex;
     /** mutex が初期化済みかどうかのフラグ。 */
@@ -72,13 +67,14 @@ struct trace_file_sink
     /** パディング (構造体サイズを 8 バイト境界に揃える)。 */
     int _pad_end;
 #elif defined(PLATFORM_WINDOWS)
-    /** ファイルハンドル。INVALID_HANDLE_VALUE = 未開。 */
-    HANDLE fh;
     /** スレッド安全のためのクリティカルセクション。 */
     CRITICAL_SECTION cs;
     /** cs が初期化済みかどうかのフラグ。 */
     int cs_initialized;
 #endif /* PLATFORM_ */
+
+    /** 低レベルファイル I/O ハンドル。 */
+    com_util_native_file_t file;
 };
 
 /* ===== 内部ヘルパー関数 ===== */
@@ -139,57 +135,22 @@ static void format_timestamp(char *buf, int buf_size)
  */
 static int open_file(trace_file_sink_t *p)
 {
-#if defined(PLATFORM_LINUX)
-    struct stat st;
+    uint32_t flags = COM_UTIL_NATIVE_FILE_OPEN_CREATE | COM_UTIL_NATIVE_FILE_OPEN_APPEND |
+                     COM_UTIL_NATIVE_FILE_OPEN_WRITE_THROUGH | COM_UTIL_NATIVE_FILE_OPEN_SHARE_READ |
+                     COM_UTIL_NATIVE_FILE_OPEN_SHARE_DELETE;
 
-    p->fd = open(p->path, O_WRONLY | O_APPEND | O_CREAT | O_DSYNC, 0644);
-
-    if (p->fd == -1)
+    if (com_util_native_file_open(&p->file, p->path, flags) != 0)
     {
         p->current_bytes = 0;
         return -1;
     }
 
-    /* 既存ファイルサイズを取得してインメモリカウンタを初期化する */
-    if (fstat(p->fd, &st) == 0)
-    {
-        p->current_bytes = (size_t)st.st_size;
-    }
-    else
+    if (com_util_native_file_get_size(&p->file, &p->current_bytes) != 0)
     {
         p->current_bytes = 0;
     }
 
     return 0;
-#elif defined(PLATFORM_WINDOWS)
-    LARGE_INTEGER pos;
-    LARGE_INTEGER size;
-
-    p->fh = CreateFileA(p->path, GENERIC_WRITE, FILE_SHARE_READ | FILE_SHARE_DELETE, NULL, OPEN_ALWAYS,
-                        FILE_ATTRIBUTE_NORMAL | FILE_FLAG_WRITE_THROUGH, NULL);
-
-    if (p->fh == INVALID_HANDLE_VALUE)
-    {
-        p->current_bytes = 0;
-        return -1;
-    }
-
-    /* 末尾へ移動して追記モードにする */
-    pos.QuadPart = 0;
-    SetFilePointerEx(p->fh, pos, NULL, FILE_END);
-
-    /* 既存ファイルサイズを取得してインメモリカウンタを初期化する */
-    if (GetFileSizeEx(p->fh, &size))
-    {
-        p->current_bytes = (size_t)size.QuadPart;
-    }
-    else
-    {
-        p->current_bytes = 0;
-    }
-
-    return 0;
-#endif /* PLATFORM_ */
 }
 
 /**
@@ -199,18 +160,13 @@ static int open_file(trace_file_sink_t *p)
  */
 static int open_file_truncate(trace_file_sink_t *p)
 {
+    uint32_t flags = COM_UTIL_NATIVE_FILE_OPEN_CREATE | COM_UTIL_NATIVE_FILE_OPEN_TRUNCATE |
+                     COM_UTIL_NATIVE_FILE_OPEN_APPEND | COM_UTIL_NATIVE_FILE_OPEN_WRITE_THROUGH |
+                     COM_UTIL_NATIVE_FILE_OPEN_SHARE_READ | COM_UTIL_NATIVE_FILE_OPEN_SHARE_DELETE;
+
     p->current_bytes = 0;
 
-#if defined(PLATFORM_LINUX)
-    p->fd = open(p->path, O_WRONLY | O_APPEND | O_CREAT | O_TRUNC | O_DSYNC, 0644);
-
-    return (p->fd != -1) ? 0 : -1;
-#elif defined(PLATFORM_WINDOWS)
-    p->fh = CreateFileA(p->path, GENERIC_WRITE, FILE_SHARE_READ | FILE_SHARE_DELETE, NULL, CREATE_ALWAYS,
-                        FILE_ATTRIBUTE_NORMAL | FILE_FLAG_WRITE_THROUGH, NULL);
-
-    return (p->fh != INVALID_HANDLE_VALUE) ? 0 : -1;
-#endif /* PLATFORM_ */
+    return com_util_native_file_open(&p->file, p->path, flags);
 }
 
 /**
@@ -218,19 +174,7 @@ static int open_file_truncate(trace_file_sink_t *p)
  */
 static void close_file(trace_file_sink_t *p)
 {
-#if defined(PLATFORM_LINUX)
-    if (p->fd != -1)
-    {
-        close(p->fd);
-        p->fd = -1;
-    }
-#elif defined(PLATFORM_WINDOWS)
-    if (p->fh != INVALID_HANDLE_VALUE)
-    {
-        CloseHandle(p->fh);
-        p->fh = INVALID_HANDLE_VALUE;
-    }
-#endif /* PLATFORM_ */
+    com_util_native_file_close(&p->file);
 }
 
 /**
@@ -250,11 +194,7 @@ static void rotate_file(trace_file_sink_t *p)
 
     /* 最老世代のファイルを削除する (失敗は無視) */
     snprintf(new_path, sizeof(new_path), "%s.%d", p->path, p->generations);
-#if defined(PLATFORM_LINUX)
-    unlink(new_path);
-#elif defined(PLATFORM_WINDOWS)
-    DeleteFileA(new_path);
-#endif /* PLATFORM_ */
+    (void)com_util_remove(new_path);
 
     /* path.(gen-1) → path.gen のカスケードリネーム */
     for (gen = p->generations; gen >= 1; gen--)
@@ -280,7 +220,7 @@ static void rotate_file(trace_file_sink_t *p)
         }
     }
 
-    /* 新規ファイルを作成して開く (失敗しても fh=INVALID/fd=-1 のまま続行) */
+    /* 新規ファイルを作成して開く (失敗しても未オープンのまま続行) */
     open_file_truncate(p);
 }
 
@@ -324,10 +264,10 @@ COM_UTIL_EXPORT trace_file_sink_t *COM_UTIL_API trace_file_sink_create(const cha
     handle->max_bytes = (max_bytes > 0) ? max_bytes : TRACE_FILE_SINK_DEFAULT_MAX_BYTES;
     handle->generations = (generations > 0) ? generations : TRACE_FILE_SINK_DEFAULT_GENERATIONS;
     handle->current_bytes = 0;
+    com_util_native_file_init(&handle->file);
 
     /* プラットフォームごとの同期プリミティブを初期化する */
 #if defined(PLATFORM_LINUX)
-    handle->fd = -1;
     handle->mutex_initialized = 0;
     if (pthread_mutex_init(&handle->mutex, NULL) != 0)
     {
@@ -337,7 +277,6 @@ COM_UTIL_EXPORT trace_file_sink_t *COM_UTIL_API trace_file_sink_create(const cha
     }
     handle->mutex_initialized = 1;
 #elif defined(PLATFORM_WINDOWS)
-    handle->fh = INVALID_HANDLE_VALUE;
     handle->cs_initialized = 0;
     InitializeCriticalSectionAndSpinCount(&handle->cs, 1000);
     handle->cs_initialized = 1;
@@ -418,40 +357,8 @@ COM_UTIL_EXPORT int COM_UTIL_API trace_file_sink_write(trace_file_sink_t *handle
     }
 #endif /* PLATFORM_ */
 
-    /* ファイルが未開の場合は書き込みをスキップする */
-#if defined(PLATFORM_LINUX)
-    if (handle->fd == -1)
-    {
-        pthread_mutex_unlock(&handle->mutex);
-        return -1;
-    }
-#elif defined(PLATFORM_WINDOWS)
-    if (handle->fh == INVALID_HANDLE_VALUE)
-    {
-        LeaveCriticalSection(&handle->cs);
-        return -1;
-    }
-#endif /* PLATFORM_ */
-
     /* ファイルへ書き込む (FILE_FLAG_WRITE_THROUGH / O_DSYNC により自動フラッシュ) */
-    ret = -1;
-#if defined(PLATFORM_LINUX)
-    {
-        ssize_t written = write(handle->fd, buf, (size_t)len);
-        if (written == (ssize_t)len)
-        {
-            ret = 0;
-        }
-    }
-#elif defined(PLATFORM_WINDOWS)
-    {
-        DWORD written = 0;
-        if (WriteFile(handle->fh, buf, (DWORD)len, &written, NULL) && (DWORD)written == (DWORD)len)
-        {
-            ret = 0;
-        }
-    }
-#endif /* PLATFORM_ */
+    ret = com_util_native_file_write(&handle->file, buf, (size_t)len);
 
     /* 書き込み成功時: サイズを追跡しローテーション閾値を確認する */
     if (ret == 0)
