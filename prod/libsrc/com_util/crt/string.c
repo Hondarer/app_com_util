@@ -1,6 +1,7 @@
 #include <com_util/crt/string.h>
 
 #include <errno.h>
+#include <stdio.h>
 #include <string.h>
 
 COM_UTIL_EXPORT int COM_UTIL_API com_util_strcpy(char *dest,
@@ -105,6 +106,30 @@ COM_UTIL_EXPORT int COM_UTIL_API com_util_wcscpy(wchar_t *dest,
 
     wmemcpy(dest, src, len + 1);
     return 0;
+}
+
+COM_UTIL_EXPORT int COM_UTIL_API com_util_vsscanf(const char *buffer,
+                                                   const char *format,
+                                                   va_list args)
+{
+#if defined(COMPILER_MSVC)
+    return vsscanf_s(buffer, format, args);
+#else
+    return vsscanf(buffer, format, args);
+#endif /* COMPILER_MSVC */
+}
+
+COM_UTIL_EXPORT int COM_UTIL_API com_util_sscanf(const char *buffer,
+                                                  const char *format,
+                                                  ...)
+{
+    va_list args;
+    int result;
+
+    va_start(args, format);
+    result = com_util_vsscanf(buffer, format, args);
+    va_end(args);
+    return result;
 }
 
 static const char *skip_space(const char *p)

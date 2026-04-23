@@ -3,6 +3,7 @@
 #if defined(PLATFORM_WINDOWS)
 
     #include <com_util/base/windows_sdk.h>
+    #include <com_util/crt/string.h>
     #include <evntcons.h>
     #include <evntrace.h>
     #pragma comment(lib, "Advapi32.lib")
@@ -65,13 +66,8 @@ static int parse_guid(const char *str, GUID *guid)
         return -1;
     }
 
-    #if defined(COMPILER_GCC)
-    n = sscanf(str, "%8x-%4x-%4x-%2x%2x-%2x%2x%2x%2x%2x%2x", &d[0], &d[1], &d[2], &d[3], &d[4], &d[5], &d[6], &d[7],
-               &d[8], &d[9], &d[10]);
-    #elif defined(COMPILER_MSVC)
-    n = sscanf_s(str, "%8x-%4x-%4x-%2x%2x-%2x%2x%2x%2x%2x%2x", &d[0], &d[1], &d[2], &d[3], &d[4], &d[5], &d[6], &d[7],
-                 &d[8], &d[9], &d[10]);
-    #endif /* COMPILER_GCC */
+    n = com_util_sscanf(str, "%8x-%4x-%4x-%2x%2x-%2x%2x%2x%2x%2x%2x", &d[0], &d[1], &d[2], &d[3], &d[4], &d[5], &d[6],
+                        &d[7], &d[8], &d[9], &d[10]);
 
     if (n != 11)
     {
