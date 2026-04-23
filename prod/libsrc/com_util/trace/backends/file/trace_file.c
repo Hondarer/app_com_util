@@ -58,23 +58,24 @@ struct trace_file_sink
     size_t current_bytes;
     /** 保持する旧世代数。 */
     int generations;
+    /** 低レベルファイル I/O ハンドル。 */
+    com_util_native_file_t file;
 
 #if defined(PLATFORM_LINUX)
     /** スレッド安全のための mutex。 */
     pthread_mutex_t mutex;
     /** mutex が初期化済みかどうかのフラグ。 */
     int mutex_initialized;
-    /** パディング (構造体サイズを 8 バイト境界に揃える)。 */
-    int _pad_end;
+    /** 構造体のサイズをアライメント境界に揃えるためのパディング。 */
+    int _pad_struct_end;
 #elif defined(PLATFORM_WINDOWS)
     /** スレッド安全のためのクリティカルセクション。 */
     CRITICAL_SECTION cs;
     /** cs が初期化済みかどうかのフラグ。 */
     int cs_initialized;
+    /** 構造体のサイズをアライメント境界に揃えるためのパディング。 */
+    int _pad_struct_end;
 #endif /* PLATFORM_ */
-
-    /** 低レベルファイル I/O ハンドル。 */
-    com_util_native_file_t file;
 };
 
 /* ===== 内部ヘルパー関数 ===== */

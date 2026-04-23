@@ -70,7 +70,14 @@ COM_UTIL_EXPORT void COM_UTIL_API symbol_loader_init(symbol_loader_entry_t *cons
         }
 
         /* func_key lib_name func_name の 3 フィールドを解析 */
+#if defined(COMPILER_GCC)
+    #pragma GCC diagnostic push
+    #pragma GCC diagnostic ignored "-Wformat-nonliteral"
+#endif /* COMPILER_GCC */
         if (com_util_sscanf(line, scan_format, func_key, lib_name, func_name) != 3)
+#if defined(COMPILER_GCC)
+    #pragma GCC diagnostic pop
+#endif /* COMPILER_GCC */
         {
             /* 空行・コメント行・フィールドが不足している行はスキップ */
             continue;
