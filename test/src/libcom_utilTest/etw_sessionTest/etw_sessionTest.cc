@@ -5,6 +5,7 @@
 #include <com_util/base/windows_sdk.h>
 #include <TraceLoggingProvider.h>
 #include <testfw.h>
+#include <mock_com_util.h>
 #include <com_util/trace/trace_etw.h>
 
 #include <mutex>
@@ -99,8 +100,19 @@ TEST_F(etw_sessionTest, test_session_start_invalid_guid)
 class etw_subscribeTest : public Test
 {
 protected:
+    Mock_com_util mock_;
+
     void SetUp() override
     {
+        ON_CALL(mock_, com_util_sscanf(_, _, _))
+            .WillByDefault([](const char *buf, const char *fmt, va_list args) {
+                return vsscanf(buf, fmt, args);
+            });
+        ON_CALL(mock_, com_util_vsscanf(_, _, _))
+            .WillByDefault([](const char *buf, const char *fmt, va_list args) {
+                return vsscanf(buf, fmt, args);
+            });
+
         int status = trace_etw_session_check_access();
         ASSERT_NE(TRACE_ETW_SESSION_ERR_ACCESS, status)
             << "ETW session requires 'Performance Log Users' group membership.\n"

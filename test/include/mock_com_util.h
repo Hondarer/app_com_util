@@ -9,6 +9,7 @@
 #include <com_util/crt/fcntl.h>
 #include <com_util/crt/stdio.h>
 #include <com_util/crt/sys/stat.h>
+#include <com_util/crt/string.h>
 #include <com_util/crt/unistd.h>
 #include <com_util/trace/trace.h>
 
@@ -35,6 +36,8 @@ public:
     MOCK_METHOD(int,    com_util_access, (const char *, int));
     MOCK_METHOD(int,    com_util_mkdir,  (const char *));
     MOCK_METHOD(int,    com_util_remove, (const char *));
+    MOCK_METHOD(int,    com_util_sscanf,  (const char *, const char *, va_list));
+    MOCK_METHOD(int,    com_util_vsscanf, (const char *, const char *, va_list));
 
     // 初期化・終了
     MOCK_METHOD(trace_logger_t *, trace_logger_create, ());
