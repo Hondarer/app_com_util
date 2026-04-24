@@ -1,4 +1,4 @@
-/native_file.c
+/file.c
 /trace.c
 /trace_etw.c
 /trace_file.c

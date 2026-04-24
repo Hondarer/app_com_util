@@ -14,7 +14,7 @@
  */
 
 #include <com_util/clock/clock.h>
-#include <com_util/crt/native_file.h>
+#include <com_util/crt/file.h>
 #include <com_util/crt/path.h>
 #include <com_util/crt/stdio.h>
 #include <com_util/trace/trace_file.h>
@@ -59,7 +59,7 @@ struct trace_file_sink
     /** 保持する旧世代数。 */
     int generations;
     /** 低レベルファイル I/O ハンドル。 */
-    com_util_native_file_t file;
+    com_util_file_t file;
 
 #if defined(PLATFORM_LINUX)
     /** スレッド安全のための mutex。 */
@@ -136,17 +136,17 @@ static void format_timestamp(char *buf, int buf_size)
  */
 static int open_file(trace_file_sink_t *p)
 {
-    uint32_t flags = COM_UTIL_NATIVE_FILE_OPEN_CREATE | COM_UTIL_NATIVE_FILE_OPEN_APPEND |
-                     COM_UTIL_NATIVE_FILE_OPEN_WRITE_THROUGH | COM_UTIL_NATIVE_FILE_OPEN_SHARE_READ |
-                     COM_UTIL_NATIVE_FILE_OPEN_SHARE_DELETE;
+    uint32_t flags = COM_UTIL_FILE_OPEN_CREATE | COM_UTIL_FILE_OPEN_APPEND |
+                     COM_UTIL_FILE_OPEN_WRITE_THROUGH | COM_UTIL_FILE_OPEN_SHARE_READ |
+                     COM_UTIL_FILE_OPEN_SHARE_DELETE;
 
-    if (com_util_native_file_open(&p->file, p->path, flags) != 0)
+    if (com_util_file_open(&p->file, p->path, flags) != 0)
     {
         p->current_bytes = 0;
         return -1;
     }
 
-    if (com_util_native_file_get_size(&p->file, &p->current_bytes) != 0)
+    if (com_util_file_get_size(&p->file, &p->current_bytes) != 0)
     {
         p->current_bytes = 0;
     }
@@ -161,13 +161,13 @@ static int open_file(trace_file_sink_t *p)
  */
 static int open_file_truncate(trace_file_sink_t *p)
 {
-    uint32_t flags = COM_UTIL_NATIVE_FILE_OPEN_CREATE | COM_UTIL_NATIVE_FILE_OPEN_TRUNCATE |
-                     COM_UTIL_NATIVE_FILE_OPEN_APPEND | COM_UTIL_NATIVE_FILE_OPEN_WRITE_THROUGH |
-                     COM_UTIL_NATIVE_FILE_OPEN_SHARE_READ | COM_UTIL_NATIVE_FILE_OPEN_SHARE_DELETE;
+    uint32_t flags = COM_UTIL_FILE_OPEN_CREATE | COM_UTIL_FILE_OPEN_TRUNCATE |
+                     COM_UTIL_FILE_OPEN_APPEND | COM_UTIL_FILE_OPEN_WRITE_THROUGH |
+                     COM_UTIL_FILE_OPEN_SHARE_READ | COM_UTIL_FILE_OPEN_SHARE_DELETE;
 
     p->current_bytes = 0;
 
-    return com_util_native_file_open(&p->file, p->path, flags);
+    return com_util_file_open(&p->file, p->path, flags);
 }
 
 /**
@@ -175,7 +175,7 @@ static int open_file_truncate(trace_file_sink_t *p)
  */
 static void close_file(trace_file_sink_t *p)
 {
-    com_util_native_file_close(&p->file);
+    com_util_file_close(&p->file);
 }
 
 /**
@@ -265,7 +265,7 @@ COM_UTIL_EXPORT trace_file_sink_t *COM_UTIL_API trace_file_sink_create(const cha
     handle->max_bytes = (max_bytes > 0) ? max_bytes : TRACE_FILE_SINK_DEFAULT_MAX_BYTES;
     handle->generations = (generations > 0) ? generations : TRACE_FILE_SINK_DEFAULT_GENERATIONS;
     handle->current_bytes = 0;
-    com_util_native_file_init(&handle->file);
+    com_util_file_init(&handle->file);
 
     /* プラットフォームごとの同期プリミティブを初期化する */
 #if defined(PLATFORM_LINUX)
@@ -359,7 +359,7 @@ COM_UTIL_EXPORT int COM_UTIL_API trace_file_sink_write(trace_file_sink_t *handle
 #endif /* PLATFORM_ */
 
     /* ファイルへ書き込む (FILE_FLAG_WRITE_THROUGH / O_DSYNC により自動フラッシュ) */
-    ret = com_util_native_file_write(&handle->file, buf, (size_t)len);
+    ret = com_util_file_write(&handle->file, buf, (size_t)len);
 
     /* 書き込み成功時: サイズを追跡しローテーション閾値を確認する */
     if (ret == 0)

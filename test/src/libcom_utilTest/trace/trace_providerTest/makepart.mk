@@ -1,7 +1,7 @@
 # テスト対象のソースファイル
 TEST_SRCS := \
 	$(MYAPP_DIR)/prod/libsrc/com_util/trace/trace.c \
-	$(MYAPP_DIR)/prod/libsrc/com_util/crt/native_file.c \
+	$(MYAPP_DIR)/prod/libsrc/com_util/crt/file.c \
 	$(MYAPP_DIR)/prod/libsrc/com_util/trace/backends/file/trace_file.c \
     $(MYAPP_DIR)/prod/libsrc/com_util/trace/backends/syslog/trace_syslog.c \
     $(MYAPP_DIR)/prod/libsrc/com_util/trace/backends/etw/trace_etw.c

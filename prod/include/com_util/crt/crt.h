@@ -19,7 +19,7 @@
 
 #include <com_util/crt/path.h>
 #include <com_util/crt/fcntl.h>
-#include <com_util/crt/native_file.h>
+#include <com_util/crt/file.h>
 #include <com_util/crt/stdio.h>
 #include <com_util/crt/string.h>
 #include <com_util/crt/time.h>

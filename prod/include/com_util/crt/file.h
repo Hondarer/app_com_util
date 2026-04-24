@@ -1,7 +1,7 @@
 /**
  *******************************************************************************
- *  @file           native_file.h
- *  @brief          ネイティブ低レベルファイル I/O 抽象 API。
+ *  @file           file.h
+ *  @brief          低レベルファイル I/O 抽象 API。
  *  @author         Tetsuo Honda
  *  @date           2026/04/24
  *
@@ -14,8 +14,8 @@
  *******************************************************************************
  */
 
-#ifndef COM_UTIL_CRT_NATIVE_FILE_H
-#define COM_UTIL_CRT_NATIVE_FILE_H
+#ifndef COM_UTIL_CRT_FILE_H
+#define COM_UTIL_CRT_FILE_H
 
 #include <stddef.h>
 #include <stdint.h>
@@ -26,44 +26,44 @@
     #include <com_util/base/windows_sdk.h>
 #endif /* PLATFORM_WINDOWS */
 
-#define COM_UTIL_NATIVE_FILE_OPEN_CREATE            (1u << 0)
-#define COM_UTIL_NATIVE_FILE_OPEN_TRUNCATE          (1u << 1)
-#define COM_UTIL_NATIVE_FILE_OPEN_APPEND            (1u << 2)
-#define COM_UTIL_NATIVE_FILE_OPEN_WRITE_THROUGH     (1u << 3)
-#define COM_UTIL_NATIVE_FILE_OPEN_SHARE_READ        (1u << 4)
-#define COM_UTIL_NATIVE_FILE_OPEN_SHARE_DELETE      (1u << 5)
+#define COM_UTIL_FILE_OPEN_CREATE            (1u << 0)
+#define COM_UTIL_FILE_OPEN_TRUNCATE          (1u << 1)
+#define COM_UTIL_FILE_OPEN_APPEND            (1u << 2)
+#define COM_UTIL_FILE_OPEN_WRITE_THROUGH     (1u << 3)
+#define COM_UTIL_FILE_OPEN_SHARE_READ        (1u << 4)
+#define COM_UTIL_FILE_OPEN_SHARE_DELETE      (1u << 5)
 
-typedef struct com_util_native_file
+typedef struct com_util_file
 {
 #if defined(PLATFORM_LINUX)
     int handle;
 #elif defined(PLATFORM_WINDOWS)
     HANDLE handle;
 #endif /* PLATFORM_ */
-} com_util_native_file_t;
+} com_util_file_t;
 
 #ifdef __cplusplus
 extern "C"
 {
 #endif /* __cplusplus */
 
-    COM_UTIL_EXPORT void COM_UTIL_API com_util_native_file_init(com_util_native_file_t *file);
+    COM_UTIL_EXPORT void COM_UTIL_API com_util_file_init(com_util_file_t *file);
 
-    COM_UTIL_EXPORT int COM_UTIL_API com_util_native_file_open(com_util_native_file_t *file,
+    COM_UTIL_EXPORT int COM_UTIL_API com_util_file_open(com_util_file_t *file,
                                                                 const char             *path,
                                                                 uint32_t                flags);
 
-    COM_UTIL_EXPORT int COM_UTIL_API com_util_native_file_write(com_util_native_file_t *file,
+    COM_UTIL_EXPORT int COM_UTIL_API com_util_file_write(com_util_file_t *file,
                                                                  const void             *buf,
                                                                  size_t                  len);
 
-    COM_UTIL_EXPORT int COM_UTIL_API com_util_native_file_get_size(com_util_native_file_t *file,
+    COM_UTIL_EXPORT int COM_UTIL_API com_util_file_get_size(com_util_file_t *file,
                                                                     size_t                 *size_out);
 
-    COM_UTIL_EXPORT void COM_UTIL_API com_util_native_file_close(com_util_native_file_t *file);
+    COM_UTIL_EXPORT void COM_UTIL_API com_util_file_close(com_util_file_t *file);
 
 #ifdef __cplusplus
 }
 #endif /* __cplusplus */
 
-#endif /* COM_UTIL_CRT_NATIVE_FILE_H */
+#endif /* COM_UTIL_CRT_FILE_H */

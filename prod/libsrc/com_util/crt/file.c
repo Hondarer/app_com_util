@@ -1,4 +1,4 @@
-#include <com_util/crt/native_file.h>
+#include <com_util/crt/file.h>
 #include <com_util/crt/path.h>
 
 #include "crt_internal.h"
@@ -9,7 +9,7 @@
     #include <unistd.h>
 #endif /* PLATFORM_LINUX */
 
-static int native_file_is_open(const com_util_native_file_t *file)
+static int file_is_open(const com_util_file_t *file)
 {
     if (file == NULL)
     {
@@ -23,7 +23,7 @@ static int native_file_is_open(const com_util_native_file_t *file)
 #endif /* PLATFORM_ */
 }
 
-COM_UTIL_EXPORT void COM_UTIL_API com_util_native_file_init(com_util_native_file_t *file)
+COM_UTIL_EXPORT void COM_UTIL_API com_util_file_init(com_util_file_t *file)
 {
     if (file == NULL)
     {
@@ -37,7 +37,7 @@ COM_UTIL_EXPORT void COM_UTIL_API com_util_native_file_init(com_util_native_file
 #endif /* PLATFORM_ */
 }
 
-COM_UTIL_EXPORT int COM_UTIL_API com_util_native_file_open(com_util_native_file_t *file,
+COM_UTIL_EXPORT int COM_UTIL_API com_util_file_open(com_util_file_t *file,
                                                             const char             *path,
                                                             uint32_t                flags)
 {
@@ -46,25 +46,25 @@ COM_UTIL_EXPORT int COM_UTIL_API com_util_native_file_open(com_util_native_file_
         return -1;
     }
 
-    com_util_native_file_close(file);
+    com_util_file_close(file);
 
 #if defined(PLATFORM_LINUX)
     {
         int open_flags = O_WRONLY;
 
-        if ((flags & COM_UTIL_NATIVE_FILE_OPEN_CREATE) != 0u)
+        if ((flags & COM_UTIL_FILE_OPEN_CREATE) != 0u)
         {
             open_flags |= O_CREAT;
         }
-        if ((flags & COM_UTIL_NATIVE_FILE_OPEN_TRUNCATE) != 0u)
+        if ((flags & COM_UTIL_FILE_OPEN_TRUNCATE) != 0u)
         {
             open_flags |= O_TRUNC;
         }
-        if ((flags & COM_UTIL_NATIVE_FILE_OPEN_APPEND) != 0u)
+        if ((flags & COM_UTIL_FILE_OPEN_APPEND) != 0u)
         {
             open_flags |= O_APPEND;
         }
-        if ((flags & COM_UTIL_NATIVE_FILE_OPEN_WRITE_THROUGH) != 0u)
+        if ((flags & COM_UTIL_FILE_OPEN_WRITE_THROUGH) != 0u)
         {
 #if defined(O_DSYNC)
             open_flags |= O_DSYNC;
@@ -74,7 +74,7 @@ COM_UTIL_EXPORT int COM_UTIL_API com_util_native_file_open(com_util_native_file_
         }
 
         file->handle = open(path, open_flags, 0644);
-        return native_file_is_open(file) ? 0 : -1;
+        return file_is_open(file) ? 0 : -1;
     }
 #elif defined(PLATFORM_WINDOWS)
     {
@@ -89,24 +89,24 @@ COM_UTIL_EXPORT int COM_UTIL_API com_util_native_file_open(com_util_native_file_
             return -1;
         }
 
-        if ((flags & COM_UTIL_NATIVE_FILE_OPEN_SHARE_READ) != 0u)
+        if ((flags & COM_UTIL_FILE_OPEN_SHARE_READ) != 0u)
         {
             share_mode |= FILE_SHARE_READ;
         }
-        if ((flags & COM_UTIL_NATIVE_FILE_OPEN_SHARE_DELETE) != 0u)
+        if ((flags & COM_UTIL_FILE_OPEN_SHARE_DELETE) != 0u)
         {
             share_mode |= FILE_SHARE_DELETE;
         }
-        if ((flags & COM_UTIL_NATIVE_FILE_OPEN_WRITE_THROUGH) != 0u)
+        if ((flags & COM_UTIL_FILE_OPEN_WRITE_THROUGH) != 0u)
         {
             file_flags |= FILE_FLAG_WRITE_THROUGH;
         }
 
-        if ((flags & COM_UTIL_NATIVE_FILE_OPEN_CREATE) != 0u)
+        if ((flags & COM_UTIL_FILE_OPEN_CREATE) != 0u)
         {
-            creation_disposition = ((flags & COM_UTIL_NATIVE_FILE_OPEN_TRUNCATE) != 0u) ? CREATE_ALWAYS : OPEN_ALWAYS;
+            creation_disposition = ((flags & COM_UTIL_FILE_OPEN_TRUNCATE) != 0u) ? CREATE_ALWAYS : OPEN_ALWAYS;
         }
-        else if ((flags & COM_UTIL_NATIVE_FILE_OPEN_TRUNCATE) != 0u)
+        else if ((flags & COM_UTIL_FILE_OPEN_TRUNCATE) != 0u)
         {
             creation_disposition = TRUNCATE_EXISTING;
         }
@@ -122,17 +122,17 @@ COM_UTIL_EXPORT int COM_UTIL_API com_util_native_file_open(com_util_native_file_
                                    creation_disposition,
                                    file_flags,
                                    NULL);
-        if (!native_file_is_open(file))
+        if (!file_is_open(file))
         {
             return -1;
         }
 
-        if ((flags & COM_UTIL_NATIVE_FILE_OPEN_APPEND) != 0u)
+        if ((flags & COM_UTIL_FILE_OPEN_APPEND) != 0u)
         {
             pos.QuadPart = 0;
             if (!SetFilePointerEx(file->handle, pos, NULL, FILE_END))
             {
-                com_util_native_file_close(file);
+                com_util_file_close(file);
                 return -1;
             }
         }
@@ -142,11 +142,11 @@ COM_UTIL_EXPORT int COM_UTIL_API com_util_native_file_open(com_util_native_file_
 #endif /* PLATFORM_ */
 }
 
-COM_UTIL_EXPORT int COM_UTIL_API com_util_native_file_write(com_util_native_file_t *file,
+COM_UTIL_EXPORT int COM_UTIL_API com_util_file_write(com_util_file_t *file,
                                                              const void             *buf,
                                                              size_t                  len)
 {
-    if (!native_file_is_open(file) || (buf == NULL && len > 0u))
+    if (!file_is_open(file) || (buf == NULL && len > 0u))
     {
         return -1;
     }
@@ -199,10 +199,10 @@ COM_UTIL_EXPORT int COM_UTIL_API com_util_native_file_write(com_util_native_file
 #endif /* PLATFORM_ */
 }
 
-COM_UTIL_EXPORT int COM_UTIL_API com_util_native_file_get_size(com_util_native_file_t *file,
+COM_UTIL_EXPORT int COM_UTIL_API com_util_file_get_size(com_util_file_t *file,
                                                                 size_t                 *size_out)
 {
-    if (!native_file_is_open(file) || size_out == NULL)
+    if (!file_is_open(file) || size_out == NULL)
     {
         return -1;
     }
@@ -234,7 +234,7 @@ COM_UTIL_EXPORT int COM_UTIL_API com_util_native_file_get_size(com_util_native_f
 #endif /* PLATFORM_ */
 }
 
-COM_UTIL_EXPORT void COM_UTIL_API com_util_native_file_close(com_util_native_file_t *file)
+COM_UTIL_EXPORT void COM_UTIL_API com_util_file_close(com_util_file_t *file)
 {
     if (file == NULL)
     {

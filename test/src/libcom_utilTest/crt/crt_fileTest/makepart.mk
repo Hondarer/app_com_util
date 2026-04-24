@@ -1,6 +1,6 @@
 # テスト対象のソースファイル
 TEST_SRCS := \
-	$(MYAPP_DIR)/prod/libsrc/com_util/crt/native_file.c
+	$(MYAPP_DIR)/prod/libsrc/com_util/crt/file.c
 
 INCDIR += \
 	$(MYAPP_DIR)/prod/libsrc/com_util/crt
