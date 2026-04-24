@@ -26,26 +26,34 @@
  *******************************************************************************
  */
 
-#include <com_util/runtime/symbol_loader.h>
 #include <com_util/crt/stdio.h>
 #include <com_util/crt/string.h>
-#include <stdio.h>
+#include <com_util/runtime/symbol_loader.h>
 #include <string.h>
 
 /** fgets で読み込む行バッファの最大長 */
 #define CONFIG_LINE_MAX 1024
 
+#define STR_IMPL(x) #x
+#define STR(x)      STR_IMPL(x)
+
+#define SYMBOL_LOADER_NAME_WIDTH 255
+_Static_assert(SYMBOL_LOADER_NAME_WIDTH == SYMBOL_LOADER_NAME_MAX - 1,
+               "SYMBOL_LOADER_NAME_WIDTH must be SYMBOL_LOADER_NAME_MAX - 1");
+#define CONFIG_SCAN_FIELD(width) "%" STR(width) "s"
+#define CONFIG_SCAN_NAME         CONFIG_SCAN_FIELD(SYMBOL_LOADER_NAME_WIDTH)
+
+#define CONFIG_SCAN_FMT CONFIG_SCAN_NAME " " CONFIG_SCAN_NAME " " CONFIG_SCAN_NAME
+
 /* doxygen コメントは、ヘッダに記載 */
-COM_UTIL_EXPORT void COM_UTIL_API symbol_loader_init(symbol_loader_entry_t *const *fobj_array,
-                                                               const size_t                  fobj_length,
-                                                               const char                   *configpath)
+COM_UTIL_EXPORT void COM_UTIL_API symbol_loader_init(symbol_loader_entry_t *const *fobj_array, const size_t fobj_length,
+                                                     const char *configpath)
 {
     FILE *fp;
     char line[CONFIG_LINE_MAX];
     char func_key[SYMBOL_LOADER_NAME_MAX];
     char lib_name[SYMBOL_LOADER_NAME_MAX];
     char func_name[SYMBOL_LOADER_NAME_MAX];
-    char scan_format[32];
     char *comment;
     size_t fobj_index;
 
@@ -54,11 +62,6 @@ COM_UTIL_EXPORT void COM_UTIL_API symbol_loader_init(symbol_loader_entry_t *cons
     {
         return;
     }
-
-    (void)snprintf(scan_format, sizeof(scan_format), "%%%zus %%%zus %%%zus",
-                   sizeof(func_key) - 1,
-                   sizeof(lib_name) - 1,
-                   sizeof(func_name) - 1);
 
     while (com_util_fgets(line, sizeof(line), fp) != NULL)
     {
@@ -70,14 +73,7 @@ COM_UTIL_EXPORT void COM_UTIL_API symbol_loader_init(symbol_loader_entry_t *cons
         }
 
         /* func_key lib_name func_name の 3 フィールドを解析 */
-#if defined(COMPILER_GCC)
-    #pragma GCC diagnostic push
-    #pragma GCC diagnostic ignored "-Wformat-nonliteral"
-#endif /* COMPILER_GCC */
-        if (com_util_sscanf(line, scan_format, func_key, lib_name, func_name) != 3)
-#if defined(COMPILER_GCC)
-    #pragma GCC diagnostic pop
-#endif /* COMPILER_GCC */
+        if (com_util_sscanf(line, CONFIG_SCAN_FMT, func_key, lib_name, func_name) != 3)
         {
             /* 空行・コメント行・フィールドが不足している行はスキップ */
             continue;
@@ -92,8 +88,8 @@ COM_UTIL_EXPORT void COM_UTIL_API symbol_loader_init(symbol_loader_entry_t *cons
                 continue;
             }
 
-            (void)com_util_strncpy(cache->lib_name, SYMBOL_LOADER_NAME_MAX, lib_name, SYMBOL_LOADER_NAME_MAX - 1);
-            (void)com_util_strncpy(cache->func_name, SYMBOL_LOADER_NAME_MAX, func_name, SYMBOL_LOADER_NAME_MAX - 1);
+            (void)com_util_strncpy(cache->lib_name, SYMBOL_LOADER_NAME_MAX, lib_name, SYMBOL_LOADER_NAME_WIDTH);
+            (void)com_util_strncpy(cache->func_name, SYMBOL_LOADER_NAME_MAX, func_name, SYMBOL_LOADER_NAME_WIDTH);
             break;
         }
     }
