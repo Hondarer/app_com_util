@@ -3,9 +3,11 @@
 
 #include <testfw.h>
 #include <stdint.h>
+#include <time.h>
 #include <com_util/compress/compress.h>
 #include <com_util/crypto/crypto.h>
 #include <com_util/crt/fcntl.h>
+#include <com_util/crt/time.h>
 #include <com_util/crt/stdio.h>
 #include <com_util/crt/sys/stat.h>
 #include <com_util/crt/string.h>
@@ -37,6 +39,7 @@ public:
     MOCK_METHOD(int,    com_util_remove, (const char *));
     MOCK_METHOD(int,    com_util_sscanf,  (const char *, const char *, va_list));
     MOCK_METHOD(int,    com_util_vsscanf, (const char *, const char *, va_list));
+    MOCK_METHOD(int,    com_util_gmtime, (struct tm *, const time_t *));
 
     // 初期化・終了
     MOCK_METHOD(trace_logger_t *, trace_logger_create, ());

@@ -1,5 +1,6 @@
 #include <testfw.h>
 #include <com_util/clock/clock.h>
+#include <mock_com_util.h>
 #include <mock_time.h>
 #ifdef _WIN32
 #include <mock_windows.h>
@@ -134,13 +135,7 @@ TEST_F(clockTest, realtime_utc_uses_platform_conversion_result)
     struct tm expected_tm = {};
     struct tm actual_tm = {};
     int32_t actual_nsec = -1;
-    time_t realtime_time = (time_t)expected_sec;
-
-#ifndef _WIN32
-    ASSERT_NE((struct tm *)NULL, gmtime_r(&realtime_time, &expected_tm));
-#else
-    ASSERT_EQ(0, gmtime_s(&expected_tm, &realtime_time));
-#endif
+    Mock_com_util mock_com_util;
 
 #ifndef _WIN32
     Mock_time mock_time;
@@ -163,9 +158,78 @@ TEST_F(clockTest, realtime_utc_uses_platform_conversion_result)
         });
 #endif
 
+    EXPECT_CALL(mock_com_util, com_util_gmtime(_, _))
+        .WillOnce([&](struct tm *utc_tm, const time_t *timep)
+        {
+            EXPECT_EQ((time_t)expected_sec, *timep);
+            expected_tm.tm_year = 124;
+            expected_tm.tm_mon = 3;
+            expected_tm.tm_mday = 5;
+            expected_tm.tm_hour = 6;
+            expected_tm.tm_min = 7;
+            expected_tm.tm_sec = 8;
+            *utc_tm = expected_tm;
+            return 0;
+        });
+
     com_util_get_realtime_utc(&actual_tm, &actual_nsec);
 
     expect_tm_equal(&actual_tm, &expected_tm);
+    EXPECT_EQ(expected_nsec, actual_nsec);
+}
+
+TEST_F(clockTest, realtime_utc_zeroes_tm_when_com_util_gmtime_fails)
+{
+    const int64_t expected_sec = 1712345678LL;
+    const int32_t expected_nsec = 246800000;
+    struct tm actual_tm = {};
+    int32_t actual_nsec = -1;
+    Mock_com_util mock_com_util;
+
+    actual_tm.tm_year = 1;
+    actual_tm.tm_mon = 2;
+    actual_tm.tm_mday = 3;
+    actual_tm.tm_hour = 4;
+    actual_tm.tm_min = 5;
+    actual_tm.tm_sec = 6;
+
+#ifndef _WIN32
+    Mock_time mock_time;
+
+    EXPECT_CALL(mock_time, clock_gettime(_, _, _, _, _))
+        .WillOnce([&](const char *, const int, const char *, clockid_t clk_id, struct timespec *ts)
+        {
+            EXPECT_EQ(CLOCK_REALTIME, clk_id);
+            ts->tv_sec = expected_sec;
+            ts->tv_nsec = expected_nsec;
+            return 0;
+        });
+#else
+    Mock_windows mock_windows;
+
+    EXPECT_CALL(mock_windows, GetSystemTimeAsFileTime(_, _, _, _))
+        .WillOnce([&](const char *, const int, const char *, LPFILETIME file_time)
+        {
+            *file_time = to_filetime(expected_sec, expected_nsec);
+        });
+#endif
+
+    EXPECT_CALL(mock_com_util, com_util_gmtime(_, _))
+        .WillOnce([&](struct tm *utc_tm, const time_t *timep)
+        {
+            EXPECT_EQ((time_t)expected_sec, *timep);
+            EXPECT_EQ(&actual_tm, utc_tm);
+            return -1;
+        });
+
+    com_util_get_realtime_utc(&actual_tm, &actual_nsec);
+
+    EXPECT_EQ(0, actual_tm.tm_year);
+    EXPECT_EQ(0, actual_tm.tm_mon);
+    EXPECT_EQ(0, actual_tm.tm_mday);
+    EXPECT_EQ(0, actual_tm.tm_hour);
+    EXPECT_EQ(0, actual_tm.tm_min);
+    EXPECT_EQ(0, actual_tm.tm_sec);
     EXPECT_EQ(expected_nsec, actual_nsec);
 }
 

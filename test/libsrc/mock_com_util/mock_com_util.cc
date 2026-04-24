@@ -31,6 +31,8 @@ Mock_com_util::Mock_com_util()
         .WillByDefault(Return(0));
     ON_CALL(*this, com_util_vsscanf(_, _, _))
         .WillByDefault(Return(0));
+    ON_CALL(*this, com_util_gmtime(_, _))
+        .WillByDefault(Return(-1));
     ON_CALL(*this, trace_logger_create())
         .WillByDefault(Return(nullptr)); // 一般的にはモックの既定の挙動は NOP にしておき、テストプログラムで具体的な挙動を決める
     ON_CALL(*this, trace_logger_destroy(_))
