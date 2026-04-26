@@ -20,7 +20,13 @@ protected:
 
     void write_text_file(const std::string& path, const char *text)
     {
+#if defined(PLATFORM_LINUX)
         FILE *fp = std::fopen(path.c_str(), "wb");
+#elif defined(PLATFORM_WINDOWS)
+        FILE *fp = NULL;
+        errno_t err = fopen_s(&fp, path.c_str(), "wb");
+        ASSERT_EQ(0, err);
+#endif /* PLATFORM_ */
         ASSERT_NE((FILE *)NULL, fp);
         ASSERT_EQ(std::strlen(text), std::fwrite(text, 1, std::strlen(text), fp));
         std::fclose(fp);
@@ -28,7 +34,16 @@ protected:
 
     std::string read_text_file(const std::string& path)
     {
-        FILE *fp = std::fopen(path.c_str(), "rb");
+        FILE *fp = NULL;
+#if defined(PLATFORM_LINUX)
+        fp = std::fopen(path.c_str(), "rb");
+#elif defined(PLATFORM_WINDOWS)
+        errno_t err = fopen_s(&fp, path.c_str(), "rb");
+        if (err != 0)
+        {
+            return std::string();
+        }
+#endif /* PLATFORM_ */
         char  buf[128];
         size_t n;
         std::string out;
