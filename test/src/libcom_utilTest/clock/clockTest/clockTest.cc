@@ -3,7 +3,7 @@
 #include <mock_com_util.h>
 #include <mock_time.h>
 #ifdef _WIN32
-#include <mock_windows.h>
+    #include <mock_windows.h>
 #endif
 #include <stdint.h>
 
@@ -29,8 +29,7 @@ static FILETIME to_filetime(int64_t tv_sec, int32_t tv_nsec)
     ULARGE_INTEGER uli;
     FILETIME file_time;
 
-    uli.QuadPart = (uint64_t)(tv_sec + filetime_epoch_offset_sec) * filetime_units_per_sec
-        + (uint64_t)(tv_nsec / 100);
+    uli.QuadPart = (uint64_t)(tv_sec + filetime_epoch_offset_sec) * filetime_units_per_sec + (uint64_t)(tv_nsec / 100);
     file_time.dwLowDateTime = uli.LowPart;
     file_time.dwHighDateTime = uli.HighPart;
 
@@ -44,18 +43,18 @@ TEST_F(clockTest, monotonic_ms_converts_platform_value)
     Mock_time mock_time;
 
     EXPECT_CALL(mock_time, clock_gettime(_, _, _, _, _))
-        .WillOnce([](const char *, const int, const char *, clockid_t clk_id, struct timespec *ts)
-        {
-            EXPECT_EQ(CLOCK_MONOTONIC, clk_id);
-            ts->tv_sec = 12;
-            ts->tv_nsec = 345678901L;
-            return 0;
-        });
+        .WillOnce(
+            [](const char *, const int, const char *, clockid_t clk_id, struct timespec *ts)
+            {
+                EXPECT_EQ(CLOCK_MONOTONIC, clk_id);
+                ts->tv_sec = 12;
+                ts->tv_nsec = 345678901L;
+                return 0;
+            });
 #else
     Mock_windows mock_windows;
 
-    EXPECT_CALL(mock_windows, GetTickCount64(_, _, _))
-        .WillOnce(Return(12345ULL));
+    EXPECT_CALL(mock_windows, GetTickCount64(_, _, _)).WillOnce(Return(12345ULL));
 #endif
 
     EXPECT_EQ(12345U, com_util_get_monotonic_ms());
@@ -70,18 +69,18 @@ TEST_F(clockTest, monotonic_returns_split_platform_value)
     Mock_time mock_time;
 
     EXPECT_CALL(mock_time, clock_gettime(_, _, _, _, _))
-        .WillOnce([](const char *, const int, const char *, clockid_t clk_id, struct timespec *ts)
-        {
-            EXPECT_EQ(CLOCK_MONOTONIC, clk_id);
-            ts->tv_sec = 12;
-            ts->tv_nsec = 345678901L;
-            return 0;
-        });
+        .WillOnce(
+            [](const char *, const int, const char *, clockid_t clk_id, struct timespec *ts)
+            {
+                EXPECT_EQ(CLOCK_MONOTONIC, clk_id);
+                ts->tv_sec = 12;
+                ts->tv_nsec = 345678901L;
+                return 0;
+            });
 #else
     Mock_windows mock_windows;
 
-    EXPECT_CALL(mock_windows, GetTickCount64(_, _, _))
-        .WillOnce(Return(12345ULL));
+    EXPECT_CALL(mock_windows, GetTickCount64(_, _, _)).WillOnce(Return(12345ULL));
 #endif
 
     com_util_get_monotonic(&tv_sec, &tv_nsec);
@@ -102,22 +101,21 @@ TEST_F(clockTest, realtime_returns_split_platform_value)
     Mock_time mock_time;
 
     EXPECT_CALL(mock_time, clock_gettime(_, _, _, _, _))
-        .WillOnce([&](const char *, const int, const char *, clockid_t clk_id, struct timespec *ts)
-        {
-            EXPECT_EQ(CLOCK_REALTIME, clk_id);
-            ts->tv_sec = expected_sec;
-            ts->tv_nsec = expected_nsec;
-            return 0;
-        });
+        .WillOnce(
+            [&](const char *, const int, const char *, clockid_t clk_id, struct timespec *ts)
+            {
+                EXPECT_EQ(CLOCK_REALTIME, clk_id);
+                ts->tv_sec = expected_sec;
+                ts->tv_nsec = expected_nsec;
+                return 0;
+            });
 #else
     const int32_t expected_nsec = 987654300;
     Mock_windows mock_windows;
 
     EXPECT_CALL(mock_windows, GetSystemTimeAsFileTime(_, _, _, _))
         .WillOnce([&](const char *, const int, const char *, LPFILETIME file_time)
-        {
-            *file_time = to_filetime(expected_sec, expected_nsec);
-        });
+                  { *file_time = to_filetime(expected_sec, expected_nsec); });
 #endif
     int64_t tv_sec = -1;
     int32_t tv_nsec = -1;
@@ -141,36 +139,36 @@ TEST_F(clockTest, realtime_utc_uses_platform_conversion_result)
     Mock_time mock_time;
 
     EXPECT_CALL(mock_time, clock_gettime(_, _, _, _, _))
-        .WillOnce([&](const char *, const int, const char *, clockid_t clk_id, struct timespec *ts)
-        {
-            EXPECT_EQ(CLOCK_REALTIME, clk_id);
-            ts->tv_sec = expected_sec;
-            ts->tv_nsec = expected_nsec;
-            return 0;
-        });
+        .WillOnce(
+            [&](const char *, const int, const char *, clockid_t clk_id, struct timespec *ts)
+            {
+                EXPECT_EQ(CLOCK_REALTIME, clk_id);
+                ts->tv_sec = expected_sec;
+                ts->tv_nsec = expected_nsec;
+                return 0;
+            });
 #else
     Mock_windows mock_windows;
 
     EXPECT_CALL(mock_windows, GetSystemTimeAsFileTime(_, _, _, _))
         .WillOnce([&](const char *, const int, const char *, LPFILETIME file_time)
-        {
-            *file_time = to_filetime(expected_sec, expected_nsec);
-        });
+                  { *file_time = to_filetime(expected_sec, expected_nsec); });
 #endif
 
     EXPECT_CALL(mock_com_util, com_util_gmtime(_, _))
-        .WillOnce([&](struct tm *utc_tm, const time_t *timep)
-        {
-            EXPECT_EQ((time_t)expected_sec, *timep);
-            expected_tm.tm_year = 124;
-            expected_tm.tm_mon = 3;
-            expected_tm.tm_mday = 5;
-            expected_tm.tm_hour = 6;
-            expected_tm.tm_min = 7;
-            expected_tm.tm_sec = 8;
-            *utc_tm = expected_tm;
-            return 0;
-        });
+        .WillOnce(
+            [&](struct tm *utc_tm, const time_t *timep)
+            {
+                EXPECT_EQ((time_t)expected_sec, *timep);
+                expected_tm.tm_year = 124;
+                expected_tm.tm_mon = 3;
+                expected_tm.tm_mday = 5;
+                expected_tm.tm_hour = 6;
+                expected_tm.tm_min = 7;
+                expected_tm.tm_sec = 8;
+                *utc_tm = expected_tm;
+                return 0;
+            });
 
     com_util_get_realtime_utc(&actual_tm, &actual_nsec);
 
@@ -197,30 +195,30 @@ TEST_F(clockTest, realtime_utc_zeroes_tm_when_com_util_gmtime_fails)
     Mock_time mock_time;
 
     EXPECT_CALL(mock_time, clock_gettime(_, _, _, _, _))
-        .WillOnce([&](const char *, const int, const char *, clockid_t clk_id, struct timespec *ts)
-        {
-            EXPECT_EQ(CLOCK_REALTIME, clk_id);
-            ts->tv_sec = expected_sec;
-            ts->tv_nsec = expected_nsec;
-            return 0;
-        });
+        .WillOnce(
+            [&](const char *, const int, const char *, clockid_t clk_id, struct timespec *ts)
+            {
+                EXPECT_EQ(CLOCK_REALTIME, clk_id);
+                ts->tv_sec = expected_sec;
+                ts->tv_nsec = expected_nsec;
+                return 0;
+            });
 #else
     Mock_windows mock_windows;
 
     EXPECT_CALL(mock_windows, GetSystemTimeAsFileTime(_, _, _, _))
         .WillOnce([&](const char *, const int, const char *, LPFILETIME file_time)
-        {
-            *file_time = to_filetime(expected_sec, expected_nsec);
-        });
+                  { *file_time = to_filetime(expected_sec, expected_nsec); });
 #endif
 
     EXPECT_CALL(mock_com_util, com_util_gmtime(_, _))
-        .WillOnce([&](struct tm *utc_tm, const time_t *timep)
-        {
-            EXPECT_EQ((time_t)expected_sec, *timep);
-            EXPECT_EQ(&actual_tm, utc_tm);
-            return -1;
-        });
+        .WillOnce(
+            [&](struct tm *utc_tm, const time_t *timep)
+            {
+                EXPECT_EQ((time_t)expected_sec, *timep);
+                EXPECT_EQ(&actual_tm, utc_tm);
+                return -1;
+            });
 
     com_util_get_realtime_utc(&actual_tm, &actual_nsec);
 
@@ -242,21 +240,20 @@ TEST_F(clockTest, realtime_deadline_ms_adds_timeout_without_nsec_carry)
     Mock_time mock_time;
 
     EXPECT_CALL(mock_time, clock_gettime(_, _, _, _, _))
-        .WillOnce([](const char *, const int, const char *, clockid_t clk_id, struct timespec *ts)
-        {
-            EXPECT_EQ(CLOCK_REALTIME, clk_id);
-            ts->tv_sec = 100;
-            ts->tv_nsec = 100000000L;
-            return 0;
-        });
+        .WillOnce(
+            [](const char *, const int, const char *, clockid_t clk_id, struct timespec *ts)
+            {
+                EXPECT_EQ(CLOCK_REALTIME, clk_id);
+                ts->tv_sec = 100;
+                ts->tv_nsec = 100000000L;
+                return 0;
+            });
 #else
     Mock_windows mock_windows;
 
     EXPECT_CALL(mock_windows, GetSystemTimeAsFileTime(_, _, _, _))
         .WillOnce([](const char *, const int, const char *, LPFILETIME file_time)
-        {
-            *file_time = to_filetime(100, 100000000);
-        });
+                  { *file_time = to_filetime(100, 100000000); });
 #endif
 
     com_util_get_realtime_deadline_ms(timeout_ms, &abs_timeout);
@@ -274,21 +271,20 @@ TEST_F(clockTest, realtime_deadline_ms_carries_nsec_overflow)
     Mock_time mock_time;
 
     EXPECT_CALL(mock_time, clock_gettime(_, _, _, _, _))
-        .WillOnce([](const char *, const int, const char *, clockid_t clk_id, struct timespec *ts)
-        {
-            EXPECT_EQ(CLOCK_REALTIME, clk_id);
-            ts->tv_sec = 100;
-            ts->tv_nsec = 800000000L;
-            return 0;
-        });
+        .WillOnce(
+            [](const char *, const int, const char *, clockid_t clk_id, struct timespec *ts)
+            {
+                EXPECT_EQ(CLOCK_REALTIME, clk_id);
+                ts->tv_sec = 100;
+                ts->tv_nsec = 800000000L;
+                return 0;
+            });
 #else
     Mock_windows mock_windows;
 
     EXPECT_CALL(mock_windows, GetSystemTimeAsFileTime(_, _, _, _))
         .WillOnce([](const char *, const int, const char *, LPFILETIME file_time)
-        {
-            *file_time = to_filetime(100, 800000000);
-        });
+                  { *file_time = to_filetime(100, 800000000); });
 #endif
 
     com_util_get_realtime_deadline_ms(timeout_ms, &abs_timeout);
