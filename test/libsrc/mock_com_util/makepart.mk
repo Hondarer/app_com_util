@@ -1,11 +1,16 @@
 ifdef PLATFORM_LINUX
-    # mock_com_util::Mock_com_util() コンストラクタが 127 個の ON_CALL を持つため、GCC の                                                                                                                                                                                                
-    # -fvar-tracking-assignments が内部サイズ制限を超えてしまい、以下の備考が出力される。
+    # mock_com_util::Mock_com_util() コンストラクタが多数の ON_CALL を持つため、GCC の
+    # -fvar-tracking-assignments が内部サイズ制限を超え、以下のメッセージが出力されることがある。
     #
     # mock_com_util.cc:6:1: 備考: 変数追跡サイズ制限が -fvar-tracking-assignments を超過しています。
     # -fvar-tracking-assignments 無しで再度試みています
     #
-    # --param=var-tracking-assignments-dom-ops-limit=<n> で上限値を引き上げると、追跡を継続しつつ
-    # 備考を抑制することができる。
-    CXXFLAGS += --param=var-tracking-assignments-dom-ops-limit=400000
+    # var-tracking-assignments-dom-ops-limit に対応している GCC では、上限値を引き上げて備考を抑制する。
+    # gcc 8 系のように未対応の環境では、-fno-var-tracking-assignments に切り替えて回避する。
+    GCC_VAR_TRACKING_ASSIGNMENTS_DOM_OPS_LIMIT_SUPPORTED := $(shell $(CXX) -Q --help=params 2>/dev/null | grep -q '^[[:space:]]*var-tracking-assignments-dom-ops-limit[[:space:]]' && echo 1)
+    ifneq ($(GCC_VAR_TRACKING_ASSIGNMENTS_DOM_OPS_LIMIT_SUPPORTED),)
+        CXXFLAGS += --param=var-tracking-assignments-dom-ops-limit=400000
+    else
+        CXXFLAGS += -fno-var-tracking-assignments
+    endif
 endif

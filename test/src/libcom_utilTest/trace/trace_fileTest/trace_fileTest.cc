@@ -1,0 +1,235 @@
+#include <testfw.h>
+#include <mock_com_util.h>
+#include <com_util/trace/trace_file.h>
+#include <com_util/crt/file.h>
+#include <string>
+#include <cstring>
+#include <ctime>
+
+using testing::_;
+using testing::AtLeast;
+using testing::HasSubstr;
+using testing::InSequence;
+using testing::NiceMock;
+using testing::Return;
+using testing::StrEq;
+
+namespace
+{
+
+static void set_valid_deadline(struct timespec *abs_timeout)
+{
+    abs_timeout->tv_sec = (time_t)(time(NULL) + 1);
+    abs_timeout->tv_nsec = 0;
+}
+
+static void set_fixed_utc(struct tm *utc_tm, int32_t *tv_nsec)
+{
+    memset(utc_tm, 0, sizeof(*utc_tm));
+    utc_tm->tm_year = 126;
+    utc_tm->tm_mon = 3;
+    utc_tm->tm_mday = 26;
+    utc_tm->tm_hour = 3;
+    utc_tm->tm_min = 4;
+    utc_tm->tm_sec = 5;
+    *tv_nsec = 678000000;
+}
+
+static uint32_t open_flags_default(void)
+{
+    return COM_UTIL_FILE_OPEN_CREATE | COM_UTIL_FILE_OPEN_APPEND |
+           COM_UTIL_FILE_OPEN_WRITE_THROUGH | COM_UTIL_FILE_OPEN_SHARE_READ |
+           COM_UTIL_FILE_OPEN_SHARE_DELETE;
+}
+
+static uint32_t open_flags_truncate(void)
+{
+    return COM_UTIL_FILE_OPEN_CREATE | COM_UTIL_FILE_OPEN_TRUNCATE |
+           COM_UTIL_FILE_OPEN_APPEND | COM_UTIL_FILE_OPEN_WRITE_THROUGH |
+           COM_UTIL_FILE_OPEN_SHARE_READ | COM_UTIL_FILE_OPEN_SHARE_DELETE;
+}
+
+} // namespace
+
+class trace_fileTest : public Test
+{
+protected:
+    NiceMock<Mock_com_util> mock_;
+
+    void SetUp() override
+    {
+        ON_CALL(mock_, com_util_get_realtime_deadline_ms(_, _))
+            .WillByDefault([](uint64_t, struct timespec *abs_timeout) {
+                set_valid_deadline(abs_timeout);
+            });
+        ON_CALL(mock_, com_util_get_realtime_utc(_, _))
+            .WillByDefault([](struct tm *utc_tm, int32_t *tv_nsec) {
+                set_fixed_utc(utc_tm, tv_nsec);
+            });
+        ON_CALL(mock_, com_util_file_open(_, _, _))
+            .WillByDefault(Return(0));
+        ON_CALL(mock_, com_util_file_get_size(_, _))
+            .WillByDefault([](com_util_file_t *, size_t *size_out) {
+                *size_out = 0;
+                return 0;
+            });
+        ON_CALL(mock_, com_util_file_write(_, _, _))
+            .WillByDefault(Return(0));
+        ON_CALL(mock_, com_util_file_close(_))
+            .WillByDefault(Return());
+        ON_CALL(mock_, com_util_remove(_))
+            .WillByDefault(Return(0));
+        ON_CALL(mock_, com_util_rename(_, _))
+            .WillByDefault(Return(0));
+    }
+};
+
+// NULL path では create が失敗することの確認
+TEST_F(trace_fileTest, test_create_returns_null_for_null_path)
+{
+    // Act
+    trace_file_sink_t *handle = trace_file_sink_create(NULL, 0, 0); // [手順] - NULL path で create を呼ぶ。
+
+    // Assert
+    EXPECT_EQ((trace_file_sink_t *)NULL, handle); // [確認_異常系] - NULL が返ること。
+}
+
+// create が既定 open flags でファイルを開くことの確認
+TEST_F(trace_fileTest, test_create_opens_file_with_default_flags)
+{
+    // Pre-Assert
+    EXPECT_CALL(mock_, com_util_file_open(_, StrEq("trace.log"), open_flags_default()))
+        .WillOnce(Return(0)); // [Pre-Assert確認_正常系] - 既定 open flags でファイルを開くこと。
+    EXPECT_CALL(mock_, com_util_file_get_size(_, _))
+        .WillOnce([](com_util_file_t *, size_t *size_out) {
+            *size_out = 123;
+            return 0;
+        }); // [Pre-Assert確認_正常系] - 既存サイズ取得が 1 回呼ばれること。
+    EXPECT_CALL(mock_, com_util_file_close(_)).Times(AtLeast(1));
+
+    // Act
+    trace_file_sink_t *handle = trace_file_sink_create("trace.log", 0, 0); // [手順] - 既定値で create を呼ぶ。
+
+    // Assert
+    EXPECT_NE((trace_file_sink_t *)NULL, handle); // [確認_正常系] - ハンドルが生成されること。
+
+    // Cleanup
+    trace_file_sink_destroy(handle);
+}
+
+// INFO 行が固定タイムスタンプと I marker で書き込まれることの確認
+TEST_F(trace_fileTest, test_write_formats_info_line)
+{
+    // Arrange
+    trace_file_sink_t *handle = trace_file_sink_create("trace.log", 0, 0);
+    ASSERT_NE((trace_file_sink_t *)NULL, handle);
+
+    // Pre-Assert
+    EXPECT_CALL(mock_, com_util_file_write(_, _, _))
+        .WillOnce([](com_util_file_t *, const void *buf, size_t len) {
+            std::string actual((const char *)buf, len);
+            EXPECT_EQ("2026-04-26 03:04:05.678 I hello\n", actual);
+            return 0;
+        }); // [Pre-Assert確認_正常系] - INFO 行が期待フォーマットで書き込まれること。
+
+    // Act
+    int result = trace_file_sink_write(handle, TRACE_LEVEL_INFO, "hello"); // [手順] - INFO 行を書き込む。
+
+    // Assert
+    EXPECT_EQ(0, result); // [確認_正常系] - 書き込みが成功すること。
+
+    // Cleanup
+    trace_file_sink_destroy(handle);
+}
+
+// DEBUG 行が D marker で書き込まれることの確認
+TEST_F(trace_fileTest, test_write_formats_debug_marker)
+{
+    // Arrange
+    trace_file_sink_t *handle = trace_file_sink_create("trace.log", 0, 0);
+    ASSERT_NE((trace_file_sink_t *)NULL, handle);
+
+    // Pre-Assert
+    EXPECT_CALL(mock_, com_util_file_write(_, _, _))
+        .WillOnce([](com_util_file_t *, const void *buf, size_t len) {
+            std::string actual((const char *)buf, len);
+            EXPECT_EQ("2026-04-26 03:04:05.678 D debug line\n", actual);
+            return 0;
+        }); // [Pre-Assert確認_正常系] - DEBUG 行が D marker で書き込まれること。
+
+    // Act
+    int result = trace_file_sink_write(handle, TRACE_LEVEL_DEBUG, "debug line"); // [手順] - DEBUG 行を書き込む。
+
+    // Assert
+    EXPECT_EQ(0, result); // [確認_正常系] - 書き込みが成功すること。
+
+    // Cleanup
+    trace_file_sink_destroy(handle);
+}
+
+// ファイル書き込み失敗時に -1 が返ることの確認
+TEST_F(trace_fileTest, test_write_returns_minus_one_on_file_error)
+{
+    // Arrange
+    trace_file_sink_t *handle = trace_file_sink_create("trace.log", 0, 0);
+    ASSERT_NE((trace_file_sink_t *)NULL, handle);
+
+    // Pre-Assert
+    EXPECT_CALL(mock_, com_util_file_write(_, _, _))
+        .WillOnce(Return(-1)); // [Pre-Assert確認_異常系] - 低レベル書き込みが -1 を返すこと。
+
+    // Act
+    int result = trace_file_sink_write(handle, TRACE_LEVEL_INFO, "write error"); // [手順] - 書き込み失敗を発生させる。
+
+    // Assert
+    EXPECT_EQ(-1, result); // [確認_異常系] - trace_file_sink_write が -1 を返すこと。
+
+    // Cleanup
+    trace_file_sink_destroy(handle);
+}
+
+// サイズ上限超過時にローテーションが実行されることの確認
+TEST_F(trace_fileTest, test_write_rotates_when_size_limit_is_reached)
+{
+    // Arrange
+    InSequence seq;
+
+    EXPECT_CALL(mock_, com_util_file_open(_, StrEq("trace.log"), open_flags_default()))
+        .WillOnce(Return(0));
+    EXPECT_CALL(mock_, com_util_file_get_size(_, _))
+        .WillOnce([](com_util_file_t *, size_t *size_out) {
+            *size_out = 0;
+            return 0;
+        });
+    EXPECT_CALL(mock_, com_util_file_write(_, _, _))
+        .WillOnce(Return(0)); // [Pre-Assert確認_正常系] - 元ファイルへの書き込みが成功すること。
+    EXPECT_CALL(mock_, com_util_file_close(_)).Times(1);
+    EXPECT_CALL(mock_, com_util_remove(StrEq("trace.log.2")))
+        .WillOnce(Return(0)); // [Pre-Assert確認_正常系] - 最古世代ファイル削除が 1 回呼ばれること。
+    EXPECT_CALL(mock_, com_util_rename(StrEq("trace.log.1"), StrEq("trace.log.2")))
+        .WillOnce(Return(0)); // [Pre-Assert確認_正常系] - 旧 .1 が .2 へ順送りされること。
+    EXPECT_CALL(mock_, com_util_rename(StrEq("trace.log"), StrEq("trace.log.1")))
+        .WillOnce(Return(0)); // [Pre-Assert確認_正常系] - 現在ファイルが .1 へリネームされること。
+    EXPECT_CALL(mock_, com_util_file_open(_, StrEq("trace.log"), open_flags_truncate()))
+        .WillOnce(Return(0)); // [Pre-Assert確認_正常系] - 新規世代ファイルが truncate 付きで開かれること。
+    EXPECT_CALL(mock_, com_util_file_close(_)).Times(1);
+
+    trace_file_sink_t *handle = trace_file_sink_create("trace.log", 1, 2);
+    ASSERT_NE((trace_file_sink_t *)NULL, handle);
+
+    // Act
+    int result = trace_file_sink_write(handle, TRACE_LEVEL_INFO, "rotate me"); // [手順] - 上限 1 byte のファイルへ 1 行書き込む。
+
+    // Assert
+    EXPECT_EQ(0, result); // [確認_正常系] - 書き込み後にローテーションが完了すること。
+
+    // Cleanup
+    trace_file_sink_destroy(handle);
+}
+
+// destroy が NULL ハンドルでも安全であることの確認
+TEST_F(trace_fileTest, test_destroy_with_null_handle_is_safe)
+{
+    // Act & Assert
+    trace_file_sink_destroy(NULL); // [手順] - NULL ハンドルで destroy を呼ぶ。
+}
