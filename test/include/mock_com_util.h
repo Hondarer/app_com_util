@@ -70,6 +70,7 @@ public:
     MOCK_METHOD(FILE *, com_util_vfopen_fmt, (const char *, int *, const char *));
     MOCK_METHOD(int,    com_util_remove_fmt,  (const char *));
     MOCK_METHOD(int,    com_util_vremove_fmt, (const char *));
+    MOCK_METHOD(FILE *, com_util_fopen_temp,  (const char *, char *, size_t, int *));
     // crt - unistd
     MOCK_METHOD(int, com_util_access_fmt,  (int, const char *));
     MOCK_METHOD(int, com_util_vaccess_fmt, (int, const char *));

@@ -29,45 +29,29 @@ extern "C"
 {
 #endif /* __cplusplus */
 
-    COM_UTIL_EXPORT FILE *COM_UTIL_API com_util_fopen(const char *path,
-                                                       const char *modes,
-                                                       int        *errno_out);
+    COM_UTIL_EXPORT FILE *COM_UTIL_API com_util_fopen(const char *path, const char *modes, int *errno_out);
 
     COM_UTIL_EXPORT int COM_UTIL_API com_util_remove(const char *path);
 
-    COM_UTIL_EXPORT int COM_UTIL_API com_util_rename(const char *oldpath,
-                                                      const char *newpath);
+    COM_UTIL_EXPORT int COM_UTIL_API com_util_rename(const char *oldpath, const char *newpath);
 
     COM_UTIL_EXPORT int COM_UTIL_API com_util_fclose(FILE *stream);
 
-    COM_UTIL_EXPORT size_t COM_UTIL_API com_util_fread(void  *ptr,
-                                                        size_t size,
-                                                        size_t count,
-                                                        FILE  *stream);
+    COM_UTIL_EXPORT size_t COM_UTIL_API com_util_fread(void *ptr, size_t size, size_t count, FILE *stream);
 
-    COM_UTIL_EXPORT size_t COM_UTIL_API com_util_fwrite(const void *ptr,
-                                                         size_t      size,
-                                                         size_t      count,
-                                                         FILE       *stream);
+    COM_UTIL_EXPORT size_t COM_UTIL_API com_util_fwrite(const void *ptr, size_t size, size_t count, FILE *stream);
 
-    COM_UTIL_EXPORT char *COM_UTIL_API com_util_fgets(char *buf,
-                                                       int   size,
-                                                       FILE *stream);
+    COM_UTIL_EXPORT char *COM_UTIL_API com_util_fgets(char *buf, int size, FILE *stream);
 
-    COM_UTIL_EXPORT int COM_UTIL_API com_util_fputs(const char *str,
-                                                     FILE       *stream);
+    COM_UTIL_EXPORT int COM_UTIL_API com_util_fputs(const char *str, FILE *stream);
 
-    COM_UTIL_EXPORT int COM_UTIL_API com_util_fprintf(FILE       *stream,
-                                                       const char *format,
-                                                       ...)
+    COM_UTIL_EXPORT int COM_UTIL_API com_util_fprintf(FILE *stream, const char *format, ...)
 #if defined(COMPILER_GCC)
         __attribute__((format(printf, 2, 3)))
 #endif /* COMPILER_GCC */
         ;
 
-    COM_UTIL_EXPORT int COM_UTIL_API com_util_vfprintf(FILE       *stream,
-                                                        const char *format,
-                                                        va_list     args)
+    COM_UTIL_EXPORT int COM_UTIL_API com_util_vfprintf(FILE *stream, const char *format, va_list args)
 #if defined(COMPILER_GCC)
         __attribute__((format(printf, 2, 0)))
 #endif /* COMPILER_GCC */
@@ -83,25 +67,18 @@ extern "C"
 
     COM_UTIL_EXPORT void COM_UTIL_API com_util_rewind(FILE *stream);
 
-    COM_UTIL_EXPORT int COM_UTIL_API com_util_fseek(FILE   *stream,
-                                                     int64_t offset,
-                                                     int     whence);
+    COM_UTIL_EXPORT int COM_UTIL_API com_util_fseek(FILE *stream, int64_t offset, int whence);
 
     COM_UTIL_EXPORT int64_t COM_UTIL_API com_util_ftell(FILE *stream);
 
-    COM_UTIL_EXPORT FILE *COM_UTIL_API com_util_fopen_fmt(const char *modes,
-                                                           int        *errno_out,
-                                                           const char *format,
-                                                           ...)
+    COM_UTIL_EXPORT FILE *COM_UTIL_API com_util_fopen_fmt(const char *modes, int *errno_out, const char *format, ...)
 #if defined(COMPILER_GCC)
         __attribute__((format(printf, 3, 4)))
 #endif /* COMPILER_GCC */
         ;
 
-    COM_UTIL_EXPORT FILE *COM_UTIL_API com_util_vfopen_fmt(const char *modes,
-                                                            int        *errno_out,
-                                                            const char *format,
-                                                            va_list     args)
+    COM_UTIL_EXPORT FILE *COM_UTIL_API com_util_vfopen_fmt(const char *modes, int *errno_out, const char *format,
+                                                           va_list args)
 #if defined(COMPILER_GCC)
         __attribute__((format(printf, 3, 0)))
 #endif /* COMPILER_GCC */
@@ -113,12 +90,35 @@ extern "C"
 #endif /* COMPILER_GCC */
         ;
 
-    COM_UTIL_EXPORT int COM_UTIL_API com_util_vremove_fmt(const char *format,
-                                                           va_list     args)
+    COM_UTIL_EXPORT int COM_UTIL_API com_util_vremove_fmt(const char *format, va_list args)
 #if defined(COMPILER_GCC)
         __attribute__((format(printf, 1, 0)))
 #endif /* COMPILER_GCC */
         ;
+
+    /**
+     *  @brief          一意な一時ファイルを atomic に作成し、書き込み用にバイナリモードで開きます。
+     *  @param[in]      prefix       ファイル名先頭につける識別子 (UTF-8)。NULL 可。
+     *                               最大 3 文字 (Windows GetTempFileNameW の制約)。
+     *                               4 文字以上を渡した場合は NULL を返し、@p errno_out に EINVAL を格納します。
+     *  @param[out]     path_out     生成された一時ファイル絶対パス (UTF-8) の格納先。
+     *  @param[in]      path_size    @p path_out のサイズ (バイト)。PLATFORM_PATH_MAX 以上を推奨します。
+     *  @param[out]     errno_out    エラー詳細の格納先。NULL 可。
+     *  @return         成功時はオープンされた FILE*、失敗時は NULL を返します。
+     *
+     *  @details
+     *  Linux 環境では TMPDIR (未設定なら "/tmp") に "<prefix>XXXXXX" のテンプレートで
+     *  mkstemp() によりファイルを atomic に作成し、その fd を fdopen() で FILE* に
+     *  変換します。\n
+     *  Windows 環境では GetTempPathW + GetTempFileNameW でユニーク名を生成し、
+     *  _wfopen_s() で再オープンします。@p path_out は wchar→UTF-8 変換した結果が
+     *  格納されます。\n
+     *  呼び出し元は不要になったら com_util_fclose() でクローズし、
+     *  必要なら com_util_remove() でファイルを削除する責任があります。\n
+     *  オープンモードは常に "wb" (バイナリ書き込み、既存内容は破棄) です。
+     */
+    COM_UTIL_EXPORT FILE *COM_UTIL_API com_util_fopen_temp(const char *prefix, char *path_out, size_t path_size,
+                                                           int *errno_out);
 
 #ifdef __cplusplus
 }
