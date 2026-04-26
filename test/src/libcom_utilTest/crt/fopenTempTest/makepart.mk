@@ -5,5 +5,5 @@ TEST_SRCS := \
 INCDIR += \
 	$(MYAPP_DIR)/prod/libsrc/com_util/crt
 
-# 実 mkstemp/_wfopen_s/getenv を呼ぶため mock_libc は含めない
-LIBS += com_util
+# ライブラリの指定
+LIBS += mock_libc com_util
