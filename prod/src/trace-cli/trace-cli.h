@@ -2,7 +2,7 @@
 #define COM_UTIL_TRACE_CLI_H
 
 #include <stdint.h>
-#include <com_util/trace/logger.h>
+#include <com_util/trace/tracer.h>
 
 #ifdef __cplusplus
 extern "C"
@@ -11,7 +11,7 @@ extern "C"
 
 typedef struct trace_cli_session_t
 {
-    com_util_logger_t *handle;
+    com_util_tracer_t *handle;
     uintptr_t exit_requested;
 } trace_cli_session_t;
 

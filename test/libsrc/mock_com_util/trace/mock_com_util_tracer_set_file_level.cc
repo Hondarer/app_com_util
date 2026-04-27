@@ -1,15 +1,15 @@
 #include <testfw.h>
 #include <mock_com_util.h>
 
-WEAK_ATR int com_util_logger_set_file_level(com_util_logger_t *handle, const char *path,
-                                  com_util_log_level_t level, size_t max_bytes,
+WEAK_ATR int com_util_tracer_set_file_level(com_util_tracer_t *handle, const char *path,
+                                  com_util_trace_level_t level, size_t max_bytes,
                                   int generations)
 {
     int rtc = 0;
 
     if (_mock_com_util != nullptr)
     {
-        rtc = _mock_com_util->com_util_logger_set_file_level(handle, path, level, max_bytes,
+        rtc = _mock_com_util->com_util_tracer_set_file_level(handle, path, level, max_bytes,
                                                      generations);
     }
 

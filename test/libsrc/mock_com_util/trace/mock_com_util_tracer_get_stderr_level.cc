@@ -1,13 +1,13 @@
 #include <testfw.h>
 #include <mock_com_util.h>
 
-WEAK_ATR int com_util_logger_stop(com_util_logger_t *handle)
+WEAK_ATR com_util_trace_level_t com_util_tracer_get_stderr_level(com_util_tracer_t *handle)
 {
-    int rtc = 0;
+    com_util_trace_level_t rtc = COM_UTIL_TRACE_LEVEL_NONE;
 
     if (_mock_com_util != nullptr)
     {
-        rtc = _mock_com_util->com_util_logger_stop(handle);
+        rtc = _mock_com_util->com_util_tracer_get_stderr_level(handle);
     }
 
     if (getTraceLevel() > TRACE_NONE)
@@ -15,7 +15,7 @@ WEAK_ATR int com_util_logger_stop(com_util_logger_t *handle)
         printf("  > %s 0x%p", __func__, (void *)handle);
         if (getTraceLevel() >= TRACE_DETAIL)
         {
-            printf(" -> %d\n", rtc);
+            printf(" -> %d\n", (int)rtc);
         }
         else
         {

@@ -1,6 +1,6 @@
 /**
  *******************************************************************************
- *  @file           logger_internal.h
+ *  @file           tracer_internal.h
  *  @brief          トレースプロバイダ内部管理関数のヘッダーファイル。
  *  @author         Tetsuo Honda
  *  @date           2026/04/03
@@ -14,8 +14,8 @@
  *******************************************************************************
  */
 
-#ifndef COM_UTIL_LOGGER_INTERNAL_H
-#define COM_UTIL_LOGGER_INTERNAL_H
+#ifndef COM_UTIL_TRACER_INTERNAL_H
+#define COM_UTIL_TRACER_INTERNAL_H
 
 #include <stddef.h>
 
@@ -29,7 +29,7 @@
  *  本関数は DllMain および constructor/destructor から呼び出し可能です。\n
  *  内部でレジストリロックを取得しません。
  *  呼び出し前に、すべてのスレッドが trace API
- *  (com_util_logger_create / com_util_logger_destroy / com_util_logger_write 等) の
+ *  (com_util_tracer_create / com_util_tracer_destroy / com_util_tracer_write 等) の
  *  呼び出しを完了している必要があります。
  *  並行してトレース API が呼ばれた場合は未定義動作になります。
  *******************************************************************************
@@ -52,4 +52,4 @@ size_t trace_registry_count(void);
  */
 size_t trace_registry_capacity(void);
 
-#endif /* COM_UTIL_LOGGER_INTERNAL_H */
+#endif /* COM_UTIL_TRACER_INTERNAL_H */

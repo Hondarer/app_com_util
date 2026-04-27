@@ -1,13 +1,13 @@
 #include <testfw.h>
 #include <mock_com_util.h>
 
-WEAK_ATR com_util_log_level_t com_util_logger_get_file_level(com_util_logger_t *handle)
+WEAK_ATR com_util_trace_level_t com_util_tracer_get_os_level(com_util_tracer_t *handle)
 {
-    com_util_log_level_t rtc = COM_UTIL_LOG_LEVEL_NONE;
+    com_util_trace_level_t rtc = COM_UTIL_TRACE_LEVEL_NONE;
 
     if (_mock_com_util != nullptr)
     {
-        rtc = _mock_com_util->com_util_logger_get_file_level(handle);
+        rtc = _mock_com_util->com_util_tracer_get_os_level(handle);
     }
 
     if (getTraceLevel() > TRACE_NONE)

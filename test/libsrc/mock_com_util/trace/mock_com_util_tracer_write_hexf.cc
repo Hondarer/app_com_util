@@ -3,7 +3,7 @@
 #include <testfw.h>
 #include <mock_com_util.h>
 
-WEAK_ATR int com_util_logger_write_hexf(com_util_logger_t *handle, com_util_log_level_t level,
+WEAK_ATR int com_util_tracer_write_hexf(com_util_tracer_t *handle, com_util_trace_level_t level,
                               const void *data, size_t size,
                               const char *format, ...)
 {
@@ -17,7 +17,7 @@ WEAK_ATR int com_util_logger_write_hexf(com_util_logger_t *handle, com_util_log_
 
     if (_mock_com_util != nullptr)
     {
-        rtc = _mock_com_util->com_util_logger_write_hexf(
+        rtc = _mock_com_util->com_util_tracer_write_hexf(
             handle, level, data, size, label);
     }
 

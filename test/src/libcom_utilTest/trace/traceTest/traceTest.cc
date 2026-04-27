@@ -1,15 +1,15 @@
 #include <testfw.h>
 #include <mock_com_util.h>
-#include <com_util/trace/logger.h>
+#include <com_util/trace/tracer.h>
 #include <string>
 #include <cstring>
 #include <ctime>
 #include <cstdint>
 
 extern "C" {
-#include "logger_internal.h"
+#include "tracer_internal.h"
 
-void com_util_log_file_sink_destroy_on_unload(com_util_log_file_sink_t *handle)
+void com_util_trace_file_sink_destroy_on_unload(com_util_trace_file_sink_t *handle)
 {
     (void)handle;
 }
@@ -67,8 +67,8 @@ class traceTest : public Test
 {
 protected:
     NiceMock<Mock_com_util> mock_;
-    com_util_log_file_sink_t *file_handle_ =
-        reinterpret_cast<com_util_log_file_sink_t *>(static_cast<uintptr_t>(0x2200));
+    com_util_trace_file_sink_t *file_handle_ =
+        reinterpret_cast<com_util_trace_file_sink_t *>(static_cast<uintptr_t>(0x2200));
 
 #if defined(PLATFORM_LINUX)
     com_util_syslog_sink_t *os_handle_ =
@@ -88,11 +88,11 @@ protected:
             .WillByDefault([](struct tm *utc_tm, int32_t *tv_nsec) {
                 set_fixed_utc(utc_tm, tv_nsec);
             });
-        ON_CALL(mock_, com_util_log_file_sink_create(_, _, _))
+        ON_CALL(mock_, com_util_trace_file_sink_create(_, _, _))
             .WillByDefault(Return(file_handle_));
-        ON_CALL(mock_, com_util_log_file_sink_write(_, _, _))
+        ON_CALL(mock_, com_util_trace_file_sink_write(_, _, _))
             .WillByDefault(Return(0));
-        ON_CALL(mock_, com_util_log_file_sink_destroy(_))
+        ON_CALL(mock_, com_util_trace_file_sink_destroy(_))
             .WillByDefault(Return());
 
 #if defined(PLATFORM_LINUX)
@@ -114,10 +114,10 @@ protected:
 #endif
     }
 
-    com_util_logger_t *create_logger()
+    com_util_tracer_t *create_logger()
     {
-        com_util_logger_t *handle = com_util_logger_create();
-        EXPECT_NE((com_util_logger_t *)NULL, handle);
+        com_util_tracer_t *handle = com_util_tracer_create();
+        EXPECT_NE((com_util_tracer_t *)NULL, handle);
         return handle;
     }
 };
@@ -126,13 +126,13 @@ protected:
 TEST_F(traceTest, test_init_and_dispose)
 {
     // Arrange & Act
-    com_util_logger_t *handle = create_logger(); // [手順] - トレースハンドルを初期化する。
+    com_util_tracer_t *handle = create_logger(); // [手順] - トレースハンドルを初期化する。
 
     // Assert
     EXPECT_EQ((size_t)1, trace_registry_count()); // [確認_正常系] - registry に 1 件登録されること。
 
     // Cleanup
-    com_util_logger_destroy(handle);
+    com_util_tracer_destroy(handle);
     EXPECT_EQ((size_t)0, trace_registry_count()); // [確認_正常系] - destroy 後に registry が空になること。
 }
 
@@ -141,12 +141,12 @@ TEST_F(traceTest, test_registry_tracks_and_expands)
 {
     // Arrange
     const size_t create_count = 12; // [状態] - 初期容量 8 を超える 12 個のハンドルを生成する。
-    com_util_logger_t *handles[create_count] = {};
+    com_util_tracer_t *handles[create_count] = {};
 
     // Act
     for (size_t i = 0; i < create_count; i++)
     {
-        handles[i] = create_logger(); // [手順] - com_util_logger_create() を 12 回呼び出す。
+        handles[i] = create_logger(); // [手順] - com_util_tracer_create() を 12 回呼び出す。
     }
 
     // Assert
@@ -154,9 +154,9 @@ TEST_F(traceTest, test_registry_tracks_and_expands)
     EXPECT_GE(trace_registry_capacity(), create_count); // [確認_正常系] - registry 容量が 12 以上へ拡張されること。
 
     // Cleanup
-    for (com_util_logger_t *handle : handles)
+    for (com_util_tracer_t *handle : handles)
     {
-        com_util_logger_destroy(handle);
+        com_util_tracer_destroy(handle);
     }
     EXPECT_EQ((size_t)0, trace_registry_count()); // [確認_正常系] - すべて破棄後に registry が空になること。
 }
@@ -165,8 +165,8 @@ TEST_F(traceTest, test_registry_tracks_and_expands)
 TEST_F(traceTest, test_write_routes_info_to_os_backend)
 {
     // Arrange
-    com_util_logger_t *handle = create_logger();
-    ASSERT_EQ(0, com_util_logger_start(handle));
+    com_util_tracer_t *handle = create_logger();
+    ASSERT_EQ(0, com_util_tracer_start(handle));
 
     // Pre-Assert
 #if defined(PLATFORM_LINUX)
@@ -178,39 +178,39 @@ TEST_F(traceTest, test_write_routes_info_to_os_backend)
 #endif
 
     // Act
-    int result = com_util_logger_write(handle, COM_UTIL_LOG_LEVEL_INFO, "test message"); // [手順] - INFO メッセージを書き込む。
+    int result = com_util_tracer_write(handle, COM_UTIL_TRACE_LEVEL_INFO, "test message"); // [手順] - INFO メッセージを書き込む。
 
     // Assert
     EXPECT_EQ(0, result); // [確認_正常系] - 書き込みが成功すること。
 
     // Cleanup
-    com_util_logger_destroy(handle);
+    com_util_tracer_destroy(handle);
 }
 
 // NULL ハンドルと NULL メッセージが安全に無視されることの確認
 TEST_F(traceTest, test_write_is_null_safe)
 {
     // Arrange
-    com_util_logger_t *handle = create_logger();
+    com_util_tracer_t *handle = create_logger();
 
     // Act
-    int null_handle_result = com_util_logger_write(NULL, COM_UTIL_LOG_LEVEL_INFO, "ignored"); // [手順] - NULL ハンドルで書き込む。
-    int null_message_result = com_util_logger_write(handle, COM_UTIL_LOG_LEVEL_INFO, NULL);    // [手順] - NULL メッセージで書き込む。
+    int null_handle_result = com_util_tracer_write(NULL, COM_UTIL_TRACE_LEVEL_INFO, "ignored"); // [手順] - NULL ハンドルで書き込む。
+    int null_message_result = com_util_tracer_write(handle, COM_UTIL_TRACE_LEVEL_INFO, NULL);    // [手順] - NULL メッセージで書き込む。
 
     // Assert
     EXPECT_EQ(0, null_handle_result);   // [確認_異常系] - NULL ハンドルで 0 が返ること。
     EXPECT_EQ(0, null_message_result);  // [確認_異常系] - NULL メッセージで 0 が返ること。
 
     // Cleanup
-    com_util_logger_destroy(handle);
+    com_util_tracer_destroy(handle);
 }
 
 // 1024 バイト超の UTF-8 文字列が安全な境界で切り詰められることの確認
 TEST_F(traceTest, test_write_truncates_utf8_boundary)
 {
     // Arrange
-    com_util_logger_t *handle = create_logger();
-    ASSERT_EQ(0, com_util_logger_start(handle));
+    com_util_tracer_t *handle = create_logger();
+    ASSERT_EQ(0, com_util_tracer_start(handle));
 
     char msg[1025];
     unsigned char utf8[] = {0xE3, 0x81, 0x82};
@@ -236,21 +236,21 @@ TEST_F(traceTest, test_write_truncates_utf8_boundary)
 #endif
 
     // Act
-    int result = com_util_logger_write(handle, COM_UTIL_LOG_LEVEL_INFO, msg); // [手順] - UTF-8 境界を跨ぐ長いメッセージを書き込む。
+    int result = com_util_tracer_write(handle, COM_UTIL_TRACE_LEVEL_INFO, msg); // [手順] - UTF-8 境界を跨ぐ長いメッセージを書き込む。
 
     // Assert
     EXPECT_EQ(0, result); // [確認_正常系] - 切り詰め後も書き込みが成功すること。
 
     // Cleanup
-    com_util_logger_destroy(handle);
+    com_util_tracer_destroy(handle);
 }
 
 // writef が format 展開後の文字列を backend へ渡すことの確認
 TEST_F(traceTest, test_writef_formats_message)
 {
     // Arrange
-    com_util_logger_t *handle = create_logger();
-    ASSERT_EQ(0, com_util_logger_start(handle));
+    com_util_tracer_t *handle = create_logger();
+    ASSERT_EQ(0, com_util_tracer_start(handle));
 
     // Pre-Assert
 #if defined(PLATFORM_LINUX)
@@ -262,21 +262,21 @@ TEST_F(traceTest, test_writef_formats_message)
 #endif
 
     // Act
-    int result = com_util_logger_writef(handle, COM_UTIL_LOG_LEVEL_INFO, "user=%s count=%d", "alice", 42); // [手順] - writef を呼び出す。
+    int result = com_util_tracer_writef(handle, COM_UTIL_TRACE_LEVEL_INFO, "user=%s count=%d", "alice", 42); // [手順] - writef を呼び出す。
 
     // Assert
     EXPECT_EQ(0, result); // [確認_正常系] - 書き込みが成功すること。
 
     // Cleanup
-    com_util_logger_destroy(handle);
+    com_util_tracer_destroy(handle);
 }
 
 // HEX 書き込みがラベル付きテキストへ変換されることの確認
 TEST_F(traceTest, test_write_hex_formats_payload)
 {
     // Arrange
-    com_util_logger_t *handle = create_logger();
-    ASSERT_EQ(0, com_util_logger_start(handle));
+    com_util_tracer_t *handle = create_logger();
+    ASSERT_EQ(0, com_util_tracer_start(handle));
     unsigned char data[] = {0x48, 0x65, 0x6C, 0x6C, 0x6F};
 
     // Pre-Assert
@@ -289,26 +289,26 @@ TEST_F(traceTest, test_write_hex_formats_payload)
 #endif
 
     // Act
-    int result = com_util_logger_write_hex(handle, COM_UTIL_LOG_LEVEL_INFO, data, sizeof(data), "Data"); // [手順] - ラベル付き HEX 書き込みを行う。
+    int result = com_util_tracer_write_hex(handle, COM_UTIL_TRACE_LEVEL_INFO, data, sizeof(data), "Data"); // [手順] - ラベル付き HEX 書き込みを行う。
 
     // Assert
     EXPECT_EQ(0, result); // [確認_正常系] - 書き込みが成功すること。
 
     // Cleanup
-    com_util_logger_destroy(handle);
+    com_util_tracer_destroy(handle);
 }
 
 // started 中は設定関数が失敗することの確認
 TEST_F(traceTest, test_config_fails_when_started)
 {
     // Arrange
-    com_util_logger_t *handle = create_logger();
-    ASSERT_EQ(0, com_util_logger_start(handle));
+    com_util_tracer_t *handle = create_logger();
+    ASSERT_EQ(0, com_util_tracer_start(handle));
 
     // Act
-    int name_result = com_util_logger_set_name(handle, "running", 0); // [手順] - started 中に set_name を呼ぶ。
-    int os_result = com_util_logger_set_os_level(handle, COM_UTIL_LOG_LEVEL_VERBOSE); // [手順] - started 中に set_os_level を呼ぶ。
-    int file_result = com_util_logger_set_file_level(handle, "trace.log", COM_UTIL_LOG_LEVEL_INFO, 0, 0); // [手順] - started 中に set_file_level を呼ぶ。
+    int name_result = com_util_tracer_set_name(handle, "running", 0); // [手順] - started 中に set_name を呼ぶ。
+    int os_result = com_util_tracer_set_os_level(handle, COM_UTIL_TRACE_LEVEL_VERBOSE); // [手順] - started 中に set_os_level を呼ぶ。
+    int file_result = com_util_tracer_set_file_level(handle, "trace.log", COM_UTIL_TRACE_LEVEL_INFO, 0, 0); // [手順] - started 中に set_file_level を呼ぶ。
 
     // Assert
     EXPECT_EQ(-1, name_result); // [確認_異常系] - started 中の set_name が失敗すること。
@@ -316,60 +316,60 @@ TEST_F(traceTest, test_config_fails_when_started)
     EXPECT_EQ(-1, file_result); // [確認_異常系] - started 中の set_file_level が失敗すること。
 
     // Cleanup
-    com_util_logger_destroy(handle);
+    com_util_tracer_destroy(handle);
 }
 
 // stopped 中の file level 設定が file backend 作成と書き込みへ反映されることの確認
 TEST_F(traceTest, test_file_level_routes_to_file_backend)
 {
     // Arrange
-    com_util_logger_t *handle = create_logger();
+    com_util_tracer_t *handle = create_logger();
 
     // Pre-Assert
-    EXPECT_CALL(mock_, com_util_log_file_sink_create(StrEq("trace.log"), 0, 0))
+    EXPECT_CALL(mock_, com_util_trace_file_sink_create(StrEq("trace.log"), 0, 0))
         .WillOnce(Return(file_handle_)); // [Pre-Assert確認_正常系] - file sink が指定パスで初期化されること。
-    EXPECT_CALL(mock_, com_util_log_file_sink_write(file_handle_, COM_UTIL_LOG_LEVEL_INFO, StrEq("file info")))
+    EXPECT_CALL(mock_, com_util_trace_file_sink_write(file_handle_, COM_UTIL_TRACE_LEVEL_INFO, StrEq("file info")))
         .WillOnce(Return(0)); // [Pre-Assert確認_正常系] - INFO が file sink へ 1 回送られること。
 
     // Act
-    ASSERT_EQ(0, com_util_logger_set_os_level(handle, COM_UTIL_LOG_LEVEL_NONE));
-    ASSERT_EQ(0, com_util_logger_set_file_level(handle, "trace.log", COM_UTIL_LOG_LEVEL_INFO, 0, 0)); // [手順] - file trace を有効化する。
-    ASSERT_EQ(0, com_util_logger_start(handle));
-    int result = com_util_logger_write(handle, COM_UTIL_LOG_LEVEL_INFO, "file info"); // [手順] - INFO メッセージを書き込む。
+    ASSERT_EQ(0, com_util_tracer_set_os_level(handle, COM_UTIL_TRACE_LEVEL_NONE));
+    ASSERT_EQ(0, com_util_tracer_set_file_level(handle, "trace.log", COM_UTIL_TRACE_LEVEL_INFO, 0, 0)); // [手順] - file trace を有効化する。
+    ASSERT_EQ(0, com_util_tracer_start(handle));
+    int result = com_util_tracer_write(handle, COM_UTIL_TRACE_LEVEL_INFO, "file info"); // [手順] - INFO メッセージを書き込む。
 
     // Assert
     EXPECT_EQ(0, result); // [確認_正常系] - file backend 経由の書き込みが成功すること。
 
     // Cleanup
-    com_util_logger_destroy(handle);
+    com_util_tracer_destroy(handle);
 }
 
 // file path 未設定では file backend へ出力されないことの確認
 TEST_F(traceTest, test_write_without_file_path_skips_file_backend)
 {
     // Arrange
-    com_util_logger_t *handle = create_logger();
-    ASSERT_EQ(0, com_util_logger_set_os_level(handle, COM_UTIL_LOG_LEVEL_NONE));
-    ASSERT_EQ(0, com_util_logger_start(handle));
+    com_util_tracer_t *handle = create_logger();
+    ASSERT_EQ(0, com_util_tracer_set_os_level(handle, COM_UTIL_TRACE_LEVEL_NONE));
+    ASSERT_EQ(0, com_util_tracer_start(handle));
 
     // Pre-Assert
-    EXPECT_CALL(mock_, com_util_log_file_sink_write(_, _, _)).Times(0); // [Pre-Assert確認_正常系] - file sink へは 1 回も送られないこと。
+    EXPECT_CALL(mock_, com_util_trace_file_sink_write(_, _, _)).Times(0); // [Pre-Assert確認_正常系] - file sink へは 1 回も送られないこと。
 
     // Act
-    int result = com_util_logger_write(handle, COM_UTIL_LOG_LEVEL_CRITICAL, "no file output"); // [手順] - file path 未設定のまま書き込む。
+    int result = com_util_tracer_write(handle, COM_UTIL_TRACE_LEVEL_CRITICAL, "no file output"); // [手順] - file path 未設定のまま書き込む。
 
     // Assert
     EXPECT_EQ(0, result); // [確認_正常系] - file 無効でもエラーにならないこと。
 
     // Cleanup
-    com_util_logger_destroy(handle);
+    com_util_tracer_destroy(handle);
 }
 
 // set_name が識別子付き名称を反映することの確認
 TEST_F(traceTest, test_set_name_with_identifier_updates_backend_name)
 {
     // Arrange
-    com_util_logger_t *handle = create_logger();
+    com_util_tracer_t *handle = create_logger();
 
     // Pre-Assert
 #if defined(PLATFORM_LINUX)
@@ -378,29 +378,29 @@ TEST_F(traceTest, test_set_name_with_identifier_updates_backend_name)
 #endif
 
     // Act
-    int result = com_util_logger_set_name(handle, "worker", 2); // [手順] - identifier = 2 で set_name を呼ぶ。
+    int result = com_util_tracer_set_name(handle, "worker", 2); // [手順] - identifier = 2 で set_name を呼ぶ。
 
     // Assert
     EXPECT_EQ(0, result); // [確認_正常系] - set_name が成功すること。
 
 #if defined(PLATFORM_WINDOWS)
-    ASSERT_EQ(0, com_util_logger_start(handle));
+    ASSERT_EQ(0, com_util_tracer_start(handle));
     EXPECT_CALL(mock_, com_util_etw_provider_write(os_handle_, 4, StrEq("worker-2"), StrEq("running as worker-2")))
         .WillOnce(Return(0)); // [Pre-Assert確認_正常系] - ETW サービス名が worker-2 に更新されること。
-    EXPECT_EQ(0, com_util_logger_write(handle, COM_UTIL_LOG_LEVEL_INFO, "running as worker-2"));
+    EXPECT_EQ(0, com_util_tracer_write(handle, COM_UTIL_TRACE_LEVEL_INFO, "running as worker-2"));
 #endif
 
     // Cleanup
-    com_util_logger_destroy(handle);
+    com_util_tracer_destroy(handle);
 }
 
-// COM_UTIL_LOG_LEVEL_NONE では OS backend が呼ばれないことの確認
+// COM_UTIL_TRACE_LEVEL_NONE では OS backend が呼ばれないことの確認
 TEST_F(traceTest, test_os_level_none_suppresses_output)
 {
     // Arrange
-    com_util_logger_t *handle = create_logger();
-    ASSERT_EQ(0, com_util_logger_set_os_level(handle, COM_UTIL_LOG_LEVEL_NONE));
-    ASSERT_EQ(0, com_util_logger_start(handle));
+    com_util_tracer_t *handle = create_logger();
+    ASSERT_EQ(0, com_util_tracer_set_os_level(handle, COM_UTIL_TRACE_LEVEL_NONE));
+    ASSERT_EQ(0, com_util_tracer_start(handle));
 
     // Pre-Assert
 #if defined(PLATFORM_LINUX)
@@ -410,28 +410,28 @@ TEST_F(traceTest, test_os_level_none_suppresses_output)
 #endif
 
     // Act
-    int result = com_util_logger_write(handle, COM_UTIL_LOG_LEVEL_CRITICAL, "suppressed"); // [手順] - OS level NONE のまま書き込む。
+    int result = com_util_tracer_write(handle, COM_UTIL_TRACE_LEVEL_CRITICAL, "suppressed"); // [手順] - OS level NONE のまま書き込む。
 
     // Assert
     EXPECT_EQ(0, result); // [確認_正常系] - 出力抑止でもエラーにならないこと。
 
     // Cleanup
-    com_util_logger_destroy(handle);
+    com_util_tracer_destroy(handle);
 }
 
 // stderr level DEBUG で V と D の marker が出力されることの確認
 TEST_F(traceTest, test_stderr_level_debug_outputs_markers)
 {
     // Arrange
-    com_util_logger_t *handle = create_logger();
-    ASSERT_EQ(0, com_util_logger_set_os_level(handle, COM_UTIL_LOG_LEVEL_NONE));
-    ASSERT_EQ(0, com_util_logger_set_stderr_level(handle, COM_UTIL_LOG_LEVEL_DEBUG));
-    ASSERT_EQ(0, com_util_logger_start(handle));
+    com_util_tracer_t *handle = create_logger();
+    ASSERT_EQ(0, com_util_tracer_set_os_level(handle, COM_UTIL_TRACE_LEVEL_NONE));
+    ASSERT_EQ(0, com_util_tracer_set_stderr_level(handle, COM_UTIL_TRACE_LEVEL_DEBUG));
+    ASSERT_EQ(0, com_util_tracer_start(handle));
 
     // Act
     testing::internal::CaptureStderr();
-    EXPECT_EQ(0, com_util_logger_write(handle, COM_UTIL_LOG_LEVEL_VERBOSE, "verbose to stderr")); // [手順] - VERBOSE を stderr へ出力する。
-    EXPECT_EQ(0, com_util_logger_write(handle, COM_UTIL_LOG_LEVEL_DEBUG, "debug to stderr"));     // [手順] - DEBUG を stderr へ出力する。
+    EXPECT_EQ(0, com_util_tracer_write(handle, COM_UTIL_TRACE_LEVEL_VERBOSE, "verbose to stderr")); // [手順] - VERBOSE を stderr へ出力する。
+    EXPECT_EQ(0, com_util_tracer_write(handle, COM_UTIL_TRACE_LEVEL_DEBUG, "debug to stderr"));     // [手順] - DEBUG を stderr へ出力する。
     std::string captured = testing::internal::GetCapturedStderr();
 
     // Assert
@@ -439,21 +439,21 @@ TEST_F(traceTest, test_stderr_level_debug_outputs_markers)
     EXPECT_NE(std::string::npos, captured.find("2026-04-26 03:04:05.678 D debug to stderr"));   // [確認_正常系] - DEBUG 行が D で出力されること。
 
     // Cleanup
-    com_util_logger_destroy(handle);
+    com_util_tracer_destroy(handle);
 }
 
 // stopped 状態では出力関数が失敗することの確認
 TEST_F(traceTest, test_write_fails_when_stopped)
 {
     // Arrange
-    com_util_logger_t *handle = create_logger();
+    com_util_tracer_t *handle = create_logger();
     unsigned char data[] = {0x01, 0x02};
 
     // Act
-    int write_result = com_util_logger_write(handle, COM_UTIL_LOG_LEVEL_INFO, "stopped message"); // [手順] - stopped 状態で write を呼ぶ。
-    int writef_result = com_util_logger_writef(handle, COM_UTIL_LOG_LEVEL_INFO, "stopped %s", "msg"); // [手順] - stopped 状態で writef を呼ぶ。
-    int hex_result = com_util_logger_write_hex(handle, COM_UTIL_LOG_LEVEL_INFO, data, sizeof(data), "hex"); // [手順] - stopped 状態で write_hex を呼ぶ。
-    int hexf_result = com_util_logger_write_hexf(handle, COM_UTIL_LOG_LEVEL_INFO, data, sizeof(data), "hex %d", 1); // [手順] - stopped 状態で write_hexf を呼ぶ。
+    int write_result = com_util_tracer_write(handle, COM_UTIL_TRACE_LEVEL_INFO, "stopped message"); // [手順] - stopped 状態で write を呼ぶ。
+    int writef_result = com_util_tracer_writef(handle, COM_UTIL_TRACE_LEVEL_INFO, "stopped %s", "msg"); // [手順] - stopped 状態で writef を呼ぶ。
+    int hex_result = com_util_tracer_write_hex(handle, COM_UTIL_TRACE_LEVEL_INFO, data, sizeof(data), "hex"); // [手順] - stopped 状態で write_hex を呼ぶ。
+    int hexf_result = com_util_tracer_write_hexf(handle, COM_UTIL_TRACE_LEVEL_INFO, data, sizeof(data), "hex %d", 1); // [手順] - stopped 状態で write_hexf を呼ぶ。
 
     // Assert
     EXPECT_EQ(-1, write_result);  // [確認_異常系] - stopped 状態の write が失敗すること。
@@ -462,20 +462,20 @@ TEST_F(traceTest, test_write_fails_when_stopped)
     EXPECT_EQ(-1, hexf_result);   // [確認_異常系] - stopped 状態の write_hexf が失敗すること。
 
     // Cleanup
-    com_util_logger_destroy(handle);
+    com_util_tracer_destroy(handle);
 }
 
 // start と stop の二重呼び出しが冪等であることの確認
 TEST_F(traceTest, test_start_and_stop_are_idempotent)
 {
     // Arrange
-    com_util_logger_t *handle = create_logger();
+    com_util_tracer_t *handle = create_logger();
 
     // Act
-    int first_start = com_util_logger_start(handle); // [手順] - 1 回目の start を呼ぶ。
-    int second_start = com_util_logger_start(handle); // [手順] - 2 回目の start を呼ぶ。
-    int first_stop = com_util_logger_stop(handle); // [手順] - 1 回目の stop を呼ぶ。
-    int second_stop = com_util_logger_stop(handle); // [手順] - 2 回目の stop を呼ぶ。
+    int first_start = com_util_tracer_start(handle); // [手順] - 1 回目の start を呼ぶ。
+    int second_start = com_util_tracer_start(handle); // [手順] - 2 回目の start を呼ぶ。
+    int first_stop = com_util_tracer_stop(handle); // [手順] - 1 回目の stop を呼ぶ。
+    int second_stop = com_util_tracer_stop(handle); // [手順] - 2 回目の stop を呼ぶ。
 
     // Assert
     EXPECT_EQ(0, first_start);  // [確認_正常系] - 1 回目の start が成功すること。
@@ -484,5 +484,5 @@ TEST_F(traceTest, test_start_and_stop_are_idempotent)
     EXPECT_EQ(0, second_stop);  // [確認_正常系] - 2 回目の stop も成功すること。
 
     // Cleanup
-    com_util_logger_destroy(handle);
+    com_util_tracer_destroy(handle);
 }

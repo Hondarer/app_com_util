@@ -1,11 +1,11 @@
 #include <testfw.h>
 #include <mock_com_util.h>
 
-WEAK_ATR void com_util_log_file_sink_destroy(com_util_log_file_sink_t *handle)
+WEAK_ATR void com_util_tracer_destroy(com_util_tracer_t *handle)
 {
     if (_mock_com_util != nullptr)
     {
-        _mock_com_util->com_util_log_file_sink_destroy(handle);
+        _mock_com_util->com_util_tracer_destroy(handle);
     }
 
     if (getTraceLevel() > TRACE_NONE)

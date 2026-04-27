@@ -1,14 +1,14 @@
 /**
  *******************************************************************************
  *  @file           trace-cli.c
- *  @brief          logger API の動作確認用対話 CLI。
+ *  @brief          tracer API の動作確認用対話 CLI。
  *  @author         Tetsuo Honda
  *  @date           2026/04/28
  *  @version        1.0.0
  *
  *  @details
- *  `com_util/trace/logger.h` の公開 API を対話的に呼び出すための確認用 CLI です。\n
- *  起動後に interactive CLI として動作し、1 セッションにつき 1 個の logger handle を保持します。
+ *  `com_util/trace/tracer.h` の公開 API を対話的に呼び出すための確認用 CLI です。\n
+ *  起動後に interactive CLI として動作し、1 セッションにつき 1 個の tracer handle を保持します。
  *
  *  @copyright      Copyright (C) Tetsuo Honda. 2026. All rights reserved.
  *
@@ -29,7 +29,7 @@
 
 #define TRACE_CLI_LINE_MAX 4096
 
-static const char *const g_log_level_names[] = {
+static const char *const g_trace_level_names[] = {
     "CRITICAL",
     "ERROR",
     "WARNING",
@@ -179,18 +179,18 @@ static char *rest_argument(char **cursor)
     return p;
 }
 
-static const char *level_to_name(com_util_log_level_t level)
+static const char *level_to_name(com_util_trace_level_t level)
 {
     if ((int)level >= 0
-        && (size_t)level < sizeof(g_log_level_names) / sizeof(g_log_level_names[0]))
+        && (size_t)level < sizeof(g_trace_level_names) / sizeof(g_trace_level_names[0]))
     {
-        return g_log_level_names[(size_t)level];
+        return g_trace_level_names[(size_t)level];
     }
 
     return "UNKNOWN";
 }
 
-static int parse_log_level(const char *token, com_util_log_level_t *level)
+static int parse_trace_level(const char *token, com_util_trace_level_t *level)
 {
     size_t i;
 
@@ -199,11 +199,11 @@ static int parse_log_level(const char *token, com_util_log_level_t *level)
         return 0;
     }
 
-    for (i = 0U; i < sizeof(g_log_level_names) / sizeof(g_log_level_names[0]); i++)
+    for (i = 0U; i < sizeof(g_trace_level_names) / sizeof(g_trace_level_names[0]); i++)
     {
-        if (str_case_equal(token, g_log_level_names[i]))
+        if (str_case_equal(token, g_trace_level_names[i]))
         {
-            *level = (com_util_log_level_t)i;
+            *level = (com_util_trace_level_t)i;
             return 1;
         }
     }
@@ -364,7 +364,7 @@ static int parse_hex_bytes(const char *text, unsigned char **data, size_t *size)
     return 1;
 }
 
-static void print_level_result(com_util_log_level_t level)
+static void print_level_result(com_util_trace_level_t level)
 {
     printf("level=%s(%d)\n", level_to_name(level), (int)level);
 }
@@ -464,13 +464,13 @@ void trace_cli_session_dispose(trace_cli_session_t *session)
         return;
     }
 
-    com_util_logger_destroy(session->handle);
+    com_util_tracer_destroy(session->handle);
     session->handle = NULL;
 }
 
 void trace_cli_print_help(void)
 {
-    printf("trace-cli: com_util logger interactive CLI\n");
+    printf("trace-cli: com_util tracer interactive CLI\n");
     printf("使用可能な level: CRITICAL ERROR WARNING INFO VERBOSE DEBUG NONE\n");
     printf("コマンド:\n");
     printf("  help\n");
@@ -550,7 +550,7 @@ int trace_cli_process_line(trace_cli_session_t *session, const char *line)
             fprintf(stderr, "エラー: 既存の handle を destroy してから create を実行してください。\n");
             return -1;
         }
-        session->handle = com_util_logger_create();
+        session->handle = com_util_tracer_create();
         if (session->handle == NULL)
         {
             printf("handle=NULL\n");
@@ -569,7 +569,7 @@ int trace_cli_process_line(trace_cli_session_t *session, const char *line)
             print_command_usage(command);
             return -1;
         }
-        com_util_logger_destroy(session->handle);
+        com_util_tracer_destroy(session->handle);
         session->handle = NULL;
         printf("handle=destroyed\n");
         return 0;
@@ -584,7 +584,7 @@ int trace_cli_process_line(trace_cli_session_t *session, const char *line)
             print_command_usage(command);
             return -1;
         }
-        rc = com_util_logger_start(session->handle);
+        rc = com_util_tracer_start(session->handle);
         printf("rc=%d\n", rc);
         return 0;
     }
@@ -598,7 +598,7 @@ int trace_cli_process_line(trace_cli_session_t *session, const char *line)
             print_command_usage(command);
             return -1;
         }
-        rc = com_util_logger_stop(session->handle);
+        rc = com_util_tracer_stop(session->handle);
         printf("rc=%d\n", rc);
         return 0;
     }
@@ -633,7 +633,7 @@ int trace_cli_process_line(trace_cli_session_t *session, const char *line)
         {
             name = name_token;
         }
-        rc = com_util_logger_set_name(session->handle, name, identifier);
+        rc = com_util_tracer_set_name(session->handle, name, identifier);
         printf("rc=%d\n", rc);
         return 0;
     }
@@ -645,14 +645,14 @@ int trace_cli_process_line(trace_cli_session_t *session, const char *line)
             print_command_usage(command);
             return -1;
         }
-        print_level_result(com_util_logger_get_os_level(session->handle));
+        print_level_result(com_util_tracer_get_os_level(session->handle));
         return 0;
     }
 
     if (strcmp(command, "set-os-level") == 0)
     {
         char *level_token;
-        com_util_log_level_t level;
+        com_util_trace_level_t level;
         int rc;
 
         level_token = next_token(&cursor);
@@ -661,12 +661,12 @@ int trace_cli_process_line(trace_cli_session_t *session, const char *line)
             print_command_usage(command);
             return -1;
         }
-        if (!parse_log_level(level_token, &level))
+        if (!parse_trace_level(level_token, &level))
         {
             fprintf(stderr, "エラー: level が不正です。\n");
             return -1;
         }
-        rc = com_util_logger_set_os_level(session->handle, level);
+        rc = com_util_tracer_set_os_level(session->handle, level);
         printf("rc=%d\n", rc);
         return 0;
     }
@@ -678,7 +678,7 @@ int trace_cli_process_line(trace_cli_session_t *session, const char *line)
             print_command_usage(command);
             return -1;
         }
-        print_level_result(com_util_logger_get_file_level(session->handle));
+        print_level_result(com_util_tracer_get_file_level(session->handle));
         return 0;
     }
 
@@ -689,7 +689,7 @@ int trace_cli_process_line(trace_cli_session_t *session, const char *line)
         char *max_bytes_token;
         char *generations_token;
         const char *path = NULL;
-        com_util_log_level_t level;
+        com_util_trace_level_t level;
         size_t max_bytes = 0U;
         int generations = 0;
         int rc;
@@ -701,7 +701,7 @@ int trace_cli_process_line(trace_cli_session_t *session, const char *line)
             print_command_usage(command);
             return -1;
         }
-        if (!parse_log_level(level_token, &level))
+        if (!parse_trace_level(level_token, &level))
         {
             fprintf(stderr, "エラー: level が不正です。\n");
             return -1;
@@ -731,7 +731,7 @@ int trace_cli_process_line(trace_cli_session_t *session, const char *line)
         {
             path = path_token;
         }
-        rc = com_util_logger_set_file_level(session->handle, path, level, max_bytes, generations);
+        rc = com_util_tracer_set_file_level(session->handle, path, level, max_bytes, generations);
         printf("rc=%d\n", rc);
         return 0;
     }
@@ -743,14 +743,14 @@ int trace_cli_process_line(trace_cli_session_t *session, const char *line)
             print_command_usage(command);
             return -1;
         }
-        print_level_result(com_util_logger_get_stderr_level(session->handle));
+        print_level_result(com_util_tracer_get_stderr_level(session->handle));
         return 0;
     }
 
     if (strcmp(command, "set-stderr-level") == 0)
     {
         char *level_token;
-        com_util_log_level_t level;
+        com_util_trace_level_t level;
         int rc;
 
         level_token = next_token(&cursor);
@@ -759,12 +759,12 @@ int trace_cli_process_line(trace_cli_session_t *session, const char *line)
             print_command_usage(command);
             return -1;
         }
-        if (!parse_log_level(level_token, &level))
+        if (!parse_trace_level(level_token, &level))
         {
             fprintf(stderr, "エラー: level が不正です。\n");
             return -1;
         }
-        rc = com_util_logger_set_stderr_level(session->handle, level);
+        rc = com_util_tracer_set_stderr_level(session->handle, level);
         printf("rc=%d\n", rc);
         return 0;
     }
@@ -773,7 +773,7 @@ int trace_cli_process_line(trace_cli_session_t *session, const char *line)
     {
         char *level_token;
         char *message;
-        com_util_log_level_t level;
+        com_util_trace_level_t level;
         int rc;
 
         level_token = next_token(&cursor);
@@ -782,7 +782,7 @@ int trace_cli_process_line(trace_cli_session_t *session, const char *line)
             print_command_usage(command);
             return -1;
         }
-        if (!parse_log_level(level_token, &level))
+        if (!parse_trace_level(level_token, &level))
         {
             fprintf(stderr, "エラー: level が不正です。\n");
             return -1;
@@ -796,11 +796,11 @@ int trace_cli_process_line(trace_cli_session_t *session, const char *line)
 
         if (strcmp(command, "write") == 0)
         {
-            rc = com_util_logger_write(session->handle, level, message);
+            rc = com_util_tracer_write(session->handle, level, message);
         }
         else
         {
-            rc = com_util_logger_writef(session->handle, level, "%s", message);
+            rc = com_util_tracer_writef(session->handle, level, "%s", message);
         }
         printf("rc=%d\n", rc);
         return 0;
@@ -812,7 +812,7 @@ int trace_cli_process_line(trace_cli_session_t *session, const char *line)
         char *hex_token;
         char *label_cursor;
         char *label;
-        com_util_log_level_t level;
+        com_util_trace_level_t level;
         unsigned char *data = NULL;
         size_t size = 0U;
         int rc;
@@ -824,7 +824,7 @@ int trace_cli_process_line(trace_cli_session_t *session, const char *line)
             print_command_usage(command);
             return -1;
         }
-        if (!parse_log_level(level_token, &level))
+        if (!parse_trace_level(level_token, &level))
         {
             fprintf(stderr, "エラー: level が不正です。\n");
             return -1;
@@ -846,11 +846,11 @@ int trace_cli_process_line(trace_cli_session_t *session, const char *line)
 
         if (strcmp(command, "write-hex") == 0)
         {
-            rc = com_util_logger_write_hex(session->handle, level, data, size, label);
+            rc = com_util_tracer_write_hex(session->handle, level, data, size, label);
         }
         else
         {
-            rc = com_util_logger_write_hexf(session->handle, level, data, size, "%s",
+            rc = com_util_tracer_write_hexf(session->handle, level, data, size, "%s",
                                             (label != NULL) ? label : "");
         }
         printf("rc=%d\n", rc);

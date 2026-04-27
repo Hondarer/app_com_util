@@ -107,36 +107,36 @@ Mock_com_util::Mock_com_util()
         .WillByDefault(Return(-1));
     ON_CALL(*this, com_util_file_close(_))
         .WillByDefault(Return());
-    ON_CALL(*this, com_util_logger_create())
+    ON_CALL(*this, com_util_tracer_create())
         .WillByDefault(Return(nullptr));
-    ON_CALL(*this, com_util_logger_destroy(_))
+    ON_CALL(*this, com_util_tracer_destroy(_))
         .WillByDefault(Return());
-    ON_CALL(*this, com_util_logger_start(_))
+    ON_CALL(*this, com_util_tracer_start(_))
         .WillByDefault(Return(0));
-    ON_CALL(*this, com_util_logger_stop(_))
+    ON_CALL(*this, com_util_tracer_stop(_))
         .WillByDefault(Return(0));
-    ON_CALL(*this, com_util_logger_write(_, _, _))
+    ON_CALL(*this, com_util_tracer_write(_, _, _))
         .WillByDefault(Return(0));
-    ON_CALL(*this, com_util_logger_write_hex(_, _, _, _, _))
+    ON_CALL(*this, com_util_tracer_write_hex(_, _, _, _, _))
         .WillByDefault(Return(0));
-    ON_CALL(*this, com_util_logger_writef(_, _, _))
+    ON_CALL(*this, com_util_tracer_writef(_, _, _))
         .WillByDefault(Return(0));
-    ON_CALL(*this, com_util_logger_write_hexf(_, _, _, _, _))
+    ON_CALL(*this, com_util_tracer_write_hexf(_, _, _, _, _))
         .WillByDefault(Return(0));
-    ON_CALL(*this, com_util_logger_set_name(_, _, _))
+    ON_CALL(*this, com_util_tracer_set_name(_, _, _))
         .WillByDefault(Return(0));
-    ON_CALL(*this, com_util_logger_set_os_level(_, _))
+    ON_CALL(*this, com_util_tracer_set_os_level(_, _))
         .WillByDefault(Return(0));
-    ON_CALL(*this, com_util_logger_set_file_level(_, _, _, _, _))
+    ON_CALL(*this, com_util_tracer_set_file_level(_, _, _, _, _))
         .WillByDefault(Return(0));
-    ON_CALL(*this, com_util_logger_set_stderr_level(_, _))
+    ON_CALL(*this, com_util_tracer_set_stderr_level(_, _))
         .WillByDefault(Return(0));
-    ON_CALL(*this, com_util_logger_get_os_level(_))
-        .WillByDefault(Return(COM_UTIL_LOG_LEVEL_NONE));
-    ON_CALL(*this, com_util_logger_get_file_level(_))
-        .WillByDefault(Return(COM_UTIL_LOG_LEVEL_NONE));
-    ON_CALL(*this, com_util_logger_get_stderr_level(_))
-        .WillByDefault(Return(COM_UTIL_LOG_LEVEL_NONE));
+    ON_CALL(*this, com_util_tracer_get_os_level(_))
+        .WillByDefault(Return(COM_UTIL_TRACE_LEVEL_NONE));
+    ON_CALL(*this, com_util_tracer_get_file_level(_))
+        .WillByDefault(Return(COM_UTIL_TRACE_LEVEL_NONE));
+    ON_CALL(*this, com_util_tracer_get_stderr_level(_))
+        .WillByDefault(Return(COM_UTIL_TRACE_LEVEL_NONE));
 
     // clock
     ON_CALL(*this, com_util_get_monotonic_ms())
@@ -183,11 +183,11 @@ Mock_com_util::Mock_com_util()
         .WillByDefault(Return(-1));
 
     // trace - log_file_sink
-    ON_CALL(*this, com_util_log_file_sink_create(_, _, _))
+    ON_CALL(*this, com_util_trace_file_sink_create(_, _, _))
         .WillByDefault(Return(nullptr));
-    ON_CALL(*this, com_util_log_file_sink_write(_, _, _))
+    ON_CALL(*this, com_util_trace_file_sink_write(_, _, _))
         .WillByDefault(Return(-1));
-    ON_CALL(*this, com_util_log_file_sink_destroy(_))
+    ON_CALL(*this, com_util_trace_file_sink_destroy(_))
         .WillByDefault(Return());
 
 #if defined(PLATFORM_LINUX)

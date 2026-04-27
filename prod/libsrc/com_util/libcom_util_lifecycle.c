@@ -18,7 +18,7 @@
 #include <com_util/base/shared_lib_lifecycle.h>
 
 #include "console/console_internal.h"
-#include "trace/logger_internal.h"
+#include "trace/tracer_internal.h"
 
 /* doxygen コメントは、ヘッダに記載 */
 static void onLoad(void)

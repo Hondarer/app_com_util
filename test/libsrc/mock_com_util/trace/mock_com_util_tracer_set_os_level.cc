@@ -1,18 +1,18 @@
 #include <testfw.h>
 #include <mock_com_util.h>
 
-WEAK_ATR int com_util_log_file_sink_write(com_util_log_file_sink_t *handle, int level, const char *message)
+WEAK_ATR int com_util_tracer_set_os_level(com_util_tracer_t *handle, com_util_trace_level_t level)
 {
-    int rtc = -1;
+    int rtc = 0;
 
     if (_mock_com_util != nullptr)
     {
-        rtc = _mock_com_util->com_util_log_file_sink_write(handle, level, message);
+        rtc = _mock_com_util->com_util_tracer_set_os_level(handle, level);
     }
 
     if (getTraceLevel() > TRACE_NONE)
     {
-        printf("  > %s %d \"%s\"", __func__, level, message != nullptr ? message : "(null)");
+        printf("  > %s 0x%p, %d", __func__, (void *)handle, (int)level);
         if (getTraceLevel() >= TRACE_DETAIL)
         {
             printf(" -> %d\n", rtc);

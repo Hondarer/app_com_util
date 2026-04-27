@@ -1,6 +1,6 @@
 #include <testfw.h>
 #include <mock_com_util.h>
-#include <com_util/trace/log_file.h>
+#include <com_util/trace/trace_file.h>
 #include <com_util/crt/file.h>
 #include <string>
 #include <cstring>
@@ -88,10 +88,10 @@ protected:
 TEST_F(trace_fileTest, test_create_returns_null_for_null_path)
 {
     // Act
-    com_util_log_file_sink_t *handle = com_util_log_file_sink_create(NULL, 0, 0); // [手順] - NULL path で create を呼ぶ。
+    com_util_trace_file_sink_t *handle = com_util_trace_file_sink_create(NULL, 0, 0); // [手順] - NULL path で create を呼ぶ。
 
     // Assert
-    EXPECT_EQ((com_util_log_file_sink_t *)NULL, handle); // [確認_異常系] - NULL が返ること。
+    EXPECT_EQ((com_util_trace_file_sink_t *)NULL, handle); // [確認_異常系] - NULL が返ること。
 }
 
 // create が既定 open flags でファイルを開くことの確認
@@ -108,21 +108,21 @@ TEST_F(trace_fileTest, test_create_opens_file_with_default_flags)
     EXPECT_CALL(mock_, com_util_file_close(_)).Times(AtLeast(1));
 
     // Act
-    com_util_log_file_sink_t *handle = com_util_log_file_sink_create("trace.log", 0, 0); // [手順] - 既定値で create を呼ぶ。
+    com_util_trace_file_sink_t *handle = com_util_trace_file_sink_create("trace.log", 0, 0); // [手順] - 既定値で create を呼ぶ。
 
     // Assert
-    EXPECT_NE((com_util_log_file_sink_t *)NULL, handle); // [確認_正常系] - ハンドルが生成されること。
+    EXPECT_NE((com_util_trace_file_sink_t *)NULL, handle); // [確認_正常系] - ハンドルが生成されること。
 
     // Cleanup
-    com_util_log_file_sink_destroy(handle);
+    com_util_trace_file_sink_destroy(handle);
 }
 
 // INFO 行が固定タイムスタンプと I marker で書き込まれることの確認
 TEST_F(trace_fileTest, test_write_formats_info_line)
 {
     // Arrange
-    com_util_log_file_sink_t *handle = com_util_log_file_sink_create("trace.log", 0, 0);
-    ASSERT_NE((com_util_log_file_sink_t *)NULL, handle);
+    com_util_trace_file_sink_t *handle = com_util_trace_file_sink_create("trace.log", 0, 0);
+    ASSERT_NE((com_util_trace_file_sink_t *)NULL, handle);
 
     // Pre-Assert
     EXPECT_CALL(mock_, com_util_file_write(_, _, _))
@@ -133,21 +133,21 @@ TEST_F(trace_fileTest, test_write_formats_info_line)
         }); // [Pre-Assert確認_正常系] - INFO 行が期待フォーマットで書き込まれること。
 
     // Act
-    int result = com_util_log_file_sink_write(handle, COM_UTIL_LOG_LEVEL_INFO, "hello"); // [手順] - INFO 行を書き込む。
+    int result = com_util_trace_file_sink_write(handle, COM_UTIL_TRACE_LEVEL_INFO, "hello"); // [手順] - INFO 行を書き込む。
 
     // Assert
     EXPECT_EQ(0, result); // [確認_正常系] - 書き込みが成功すること。
 
     // Cleanup
-    com_util_log_file_sink_destroy(handle);
+    com_util_trace_file_sink_destroy(handle);
 }
 
 // DEBUG 行が D marker で書き込まれることの確認
 TEST_F(trace_fileTest, test_write_formats_debug_marker)
 {
     // Arrange
-    com_util_log_file_sink_t *handle = com_util_log_file_sink_create("trace.log", 0, 0);
-    ASSERT_NE((com_util_log_file_sink_t *)NULL, handle);
+    com_util_trace_file_sink_t *handle = com_util_trace_file_sink_create("trace.log", 0, 0);
+    ASSERT_NE((com_util_trace_file_sink_t *)NULL, handle);
 
     // Pre-Assert
     EXPECT_CALL(mock_, com_util_file_write(_, _, _))
@@ -158,34 +158,34 @@ TEST_F(trace_fileTest, test_write_formats_debug_marker)
         }); // [Pre-Assert確認_正常系] - DEBUG 行が D marker で書き込まれること。
 
     // Act
-    int result = com_util_log_file_sink_write(handle, COM_UTIL_LOG_LEVEL_DEBUG, "debug line"); // [手順] - DEBUG 行を書き込む。
+    int result = com_util_trace_file_sink_write(handle, COM_UTIL_TRACE_LEVEL_DEBUG, "debug line"); // [手順] - DEBUG 行を書き込む。
 
     // Assert
     EXPECT_EQ(0, result); // [確認_正常系] - 書き込みが成功すること。
 
     // Cleanup
-    com_util_log_file_sink_destroy(handle);
+    com_util_trace_file_sink_destroy(handle);
 }
 
 // ファイル書き込み失敗時に -1 が返ることの確認
 TEST_F(trace_fileTest, test_write_returns_minus_one_on_file_error)
 {
     // Arrange
-    com_util_log_file_sink_t *handle = com_util_log_file_sink_create("trace.log", 0, 0);
-    ASSERT_NE((com_util_log_file_sink_t *)NULL, handle);
+    com_util_trace_file_sink_t *handle = com_util_trace_file_sink_create("trace.log", 0, 0);
+    ASSERT_NE((com_util_trace_file_sink_t *)NULL, handle);
 
     // Pre-Assert
     EXPECT_CALL(mock_, com_util_file_write(_, _, _))
         .WillOnce(Return(-1)); // [Pre-Assert確認_異常系] - 低レベル書き込みが -1 を返すこと。
 
     // Act
-    int result = com_util_log_file_sink_write(handle, COM_UTIL_LOG_LEVEL_INFO, "write error"); // [手順] - 書き込み失敗を発生させる。
+    int result = com_util_trace_file_sink_write(handle, COM_UTIL_TRACE_LEVEL_INFO, "write error"); // [手順] - 書き込み失敗を発生させる。
 
     // Assert
-    EXPECT_EQ(-1, result); // [確認_異常系] - com_util_log_file_sink_write が -1 を返すこと。
+    EXPECT_EQ(-1, result); // [確認_異常系] - com_util_trace_file_sink_write が -1 を返すこと。
 
     // Cleanup
-    com_util_log_file_sink_destroy(handle);
+    com_util_trace_file_sink_destroy(handle);
 }
 
 // サイズ上限超過時にローテーションが実行されることの確認
@@ -214,22 +214,22 @@ TEST_F(trace_fileTest, test_write_rotates_when_size_limit_is_reached)
         .WillOnce(Return(0)); // [Pre-Assert確認_正常系] - 新規世代ファイルが truncate 付きで開かれること。
     EXPECT_CALL(mock_, com_util_file_close(_)).Times(1);
 
-    com_util_log_file_sink_t *handle = com_util_log_file_sink_create("trace.log", 1, 2);
-    ASSERT_NE((com_util_log_file_sink_t *)NULL, handle);
+    com_util_trace_file_sink_t *handle = com_util_trace_file_sink_create("trace.log", 1, 2);
+    ASSERT_NE((com_util_trace_file_sink_t *)NULL, handle);
 
     // Act
-    int result = com_util_log_file_sink_write(handle, COM_UTIL_LOG_LEVEL_INFO, "rotate me"); // [手順] - 上限 1 byte のファイルへ 1 行書き込む。
+    int result = com_util_trace_file_sink_write(handle, COM_UTIL_TRACE_LEVEL_INFO, "rotate me"); // [手順] - 上限 1 byte のファイルへ 1 行書き込む。
 
     // Assert
     EXPECT_EQ(0, result); // [確認_正常系] - 書き込み後にローテーションが完了すること。
 
     // Cleanup
-    com_util_log_file_sink_destroy(handle);
+    com_util_trace_file_sink_destroy(handle);
 }
 
 // destroy が NULL ハンドルでも安全であることの確認
 TEST_F(trace_fileTest, test_destroy_with_null_handle_is_safe)
 {
     // Act & Assert
-    com_util_log_file_sink_destroy(NULL); // [手順] - NULL ハンドルで destroy を呼ぶ。
+    com_util_trace_file_sink_destroy(NULL); // [手順] - NULL ハンドルで destroy を呼ぶ。
 }

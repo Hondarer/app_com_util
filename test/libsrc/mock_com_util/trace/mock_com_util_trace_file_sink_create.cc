@@ -1,13 +1,13 @@
 #include <testfw.h>
 #include <mock_com_util.h>
 
-WEAK_ATR com_util_log_file_sink_t *com_util_log_file_sink_create(const char *path, size_t max_bytes, int generations)
+WEAK_ATR com_util_trace_file_sink_t *com_util_trace_file_sink_create(const char *path, size_t max_bytes, int generations)
 {
-    com_util_log_file_sink_t *rtc = nullptr;
+    com_util_trace_file_sink_t *rtc = nullptr;
 
     if (_mock_com_util != nullptr)
     {
-        rtc = _mock_com_util->com_util_log_file_sink_create(path, max_bytes, generations);
+        rtc = _mock_com_util->com_util_trace_file_sink_create(path, max_bytes, generations);
     }
 
     if (getTraceLevel() > TRACE_NONE)

@@ -45,8 +45,8 @@ protected:
     NiceMock<Mock_stdio> mock_stdio_;
     NiceMock<Mock_com_util> mock_com_util_;
     trace_cli_session_t session_{};
-    com_util_logger_t *handle_ =
-        reinterpret_cast<com_util_logger_t *>(static_cast<uintptr_t>(0x1234));
+    com_util_tracer_t *handle_ =
+        reinterpret_cast<com_util_tracer_t *>(static_cast<uintptr_t>(0x1234));
 
     void SetUp() override
     {
@@ -66,8 +66,8 @@ protected:
 TEST_F(trace_cliTest, process_line_create_and_reject_second_create)
 {
     // Arrange
-    EXPECT_CALL(mock_com_util_, com_util_logger_create())
-        .WillOnce(Return(handle_)); // [Pre-Assert確認] - create で logger handle が 1 回生成されること。
+    EXPECT_CALL(mock_com_util_, com_util_tracer_create())
+        .WillOnce(Return(handle_)); // [Pre-Assert確認] - create で tracer handle が 1 回生成されること。
     EXPECT_CALL(mock_stdio_, printf(_, _, _, StrEq("handle=created\n")))
         .WillOnce(Return(0)); // [Pre-Assert確認] - create 成功時の結果が出力されること。
     EXPECT_CALL(mock_stdio_, fprintf(_, _, _, _, HasSubstr("既存の handle")))
@@ -88,7 +88,7 @@ TEST_F(trace_cliTest, process_line_set_file_level_accepts_null_keyword)
     // Arrange
     session_.handle = handle_; // [状態] - 既存 handle を持つ session を用意する。
     EXPECT_CALL(mock_com_util_,
-                com_util_logger_set_file_level(handle_, nullptr, COM_UTIL_LOG_LEVEL_INFO, 0U, 0))
+                com_util_tracer_set_file_level(handle_, nullptr, COM_UTIL_TRACE_LEVEL_INFO, 0U, 0))
         .WillOnce(Return(0)); // [Pre-Assert確認] - null keyword が NULL path として渡されること。
     EXPECT_CALL(mock_stdio_, printf(_, _, _, StrEq("rc=0\n")))
         .WillOnce(Return(0)); // [Pre-Assert確認] - set-file-level の戻り値が表示されること。
@@ -105,8 +105,8 @@ TEST_F(trace_cliTest, process_line_write_hex_parses_quoted_hex_and_label)
     // Arrange
     session_.handle = handle_; // [状態] - started 済み handle 相当の session を用意する。
     EXPECT_CALL(mock_com_util_,
-                com_util_logger_write_hex(handle_, COM_UTIL_LOG_LEVEL_INFO, _, 3U, StrEq("payload bytes")))
-        .WillOnce([](com_util_logger_t *, com_util_log_level_t, const void *data,
+                com_util_tracer_write_hex(handle_, COM_UTIL_TRACE_LEVEL_INFO, _, 3U, StrEq("payload bytes")))
+        .WillOnce([](com_util_tracer_t *, com_util_trace_level_t, const void *data,
                      size_t size, const char *) {
             const unsigned char *bytes = static_cast<const unsigned char *>(data);
             EXPECT_EQ((size_t)3, size); // [確認] - 変換後データ長が 3 byte であること。
@@ -130,7 +130,7 @@ TEST_F(trace_cliTest, process_line_writef_uses_message_as_single_string)
     // Arrange
     session_.handle = handle_; // [状態] - started 済み handle 相当の session を用意する。
     EXPECT_CALL(mock_com_util_,
-                com_util_logger_writef(handle_, COM_UTIL_LOG_LEVEL_DEBUG,
+                com_util_tracer_writef(handle_, COM_UTIL_TRACE_LEVEL_DEBUG,
                                        StrEq("message with spaces")))
         .WillOnce(Return(0)); // [Pre-Assert確認] - writef が行末までを 1 つの文字列として受け取ること。
     EXPECT_CALL(mock_stdio_, printf(_, _, _, StrEq("rc=0\n")))
@@ -146,8 +146,8 @@ TEST_F(trace_cliTest, process_line_writef_uses_message_as_single_string)
 TEST_F(trace_cliTest, process_line_get_os_level_calls_api_with_null_handle)
 {
     // Arrange
-    EXPECT_CALL(mock_com_util_, com_util_logger_get_os_level(nullptr))
-        .WillOnce(Return(COM_UTIL_LOG_LEVEL_WARNING)); // [Pre-Assert確認] - NULL handle のまま getter が呼び出されること。
+    EXPECT_CALL(mock_com_util_, com_util_tracer_get_os_level(nullptr))
+        .WillOnce(Return(COM_UTIL_TRACE_LEVEL_WARNING)); // [Pre-Assert確認] - NULL handle のまま getter が呼び出されること。
     EXPECT_CALL(mock_stdio_, printf(_, _, _, StrEq("level=WARNING(2)\n")))
         .WillOnce(Return(0)); // [Pre-Assert確認] - getter 結果が文字列と enum 値で表示されること。
 
@@ -202,16 +202,16 @@ TEST_F(trace_cliTest, main_runs_interactive_sequence_and_disposes_handle)
 
     EXPECT_CALL(mock_com_util_, com_util_console_init())
         .WillOnce(Return()); // [Pre-Assert確認] - main() 起動時に console 初期化が呼ばれること。
-    EXPECT_CALL(mock_com_util_, com_util_logger_destroy(_))
+    EXPECT_CALL(mock_com_util_, com_util_tracer_destroy(_))
         .Times(AnyNumber())
         .WillRepeatedly(Return()); // [Pre-Assert確認] - destroy 呼び出しのうち、対象外の NULL は許容すること。
-    EXPECT_CALL(mock_com_util_, com_util_logger_create())
-        .WillOnce(Return(handle_)); // [Pre-Assert確認] - create コマンドで logger handle が生成されること。
-    EXPECT_CALL(mock_com_util_, com_util_logger_start(handle_))
-        .WillOnce(Return(0)); // [Pre-Assert確認] - start コマンドで logger が開始されること。
-    EXPECT_CALL(mock_com_util_, com_util_logger_write(handle_, COM_UTIL_LOG_LEVEL_INFO, StrEq("hello world")))
+    EXPECT_CALL(mock_com_util_, com_util_tracer_create())
+        .WillOnce(Return(handle_)); // [Pre-Assert確認] - create コマンドで tracer handle が生成されること。
+    EXPECT_CALL(mock_com_util_, com_util_tracer_start(handle_))
+        .WillOnce(Return(0)); // [Pre-Assert確認] - start コマンドで tracer が開始されること。
+    EXPECT_CALL(mock_com_util_, com_util_tracer_write(handle_, COM_UTIL_TRACE_LEVEL_INFO, StrEq("hello world")))
         .WillOnce(Return(0)); // [Pre-Assert確認] - write コマンドで message がそのまま渡されること。
-    EXPECT_CALL(mock_com_util_, com_util_logger_destroy(handle_))
+    EXPECT_CALL(mock_com_util_, com_util_tracer_destroy(handle_))
         .WillOnce(Return()); // [Pre-Assert確認] - 終了時に保持中 handle が破棄されること。
     EXPECT_CALL(mock_stdio_, fgets(_, _, _, _, _, _))
         .Times(AtLeast(1))
