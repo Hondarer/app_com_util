@@ -5,7 +5,7 @@
 #include <com_util/base/windows_sdk.h>
 #include <TraceLoggingProvider.h>
 #include <testfw.h>
-#include <com_util/trace/trace_etw.h>
+#include <com_util/trace/etw.h>
 
 #include <mutex>
 #include <vector>
@@ -13,7 +13,7 @@
 #include <utility>
 #include <cstdio>
 
-TRACE_ETW_DEFINE_PROVIDER(
+COM_UTIL_ETW_DEFINE_PROVIDER(
     s_test_provider,
     "EtwSessionTest",
     (0x0dfe6031, 0x5678, 0x4688, 0xae, 0xe8, 0x61, 0x13, 0x40, 0x99, 0x7c, 0xaa));
@@ -49,33 +49,33 @@ class etwSessionIntegrationTest : public Test
 
 TEST_F(etwSessionIntegrationTest, test_session_stop_with_null)
 {
-    trace_etw_session_stop(NULL); // [手順] - NULL セッションで stop を呼ぶ。
+    com_util_etw_session_stop(NULL); // [手順] - NULL セッションで stop を呼ぶ。
 }
 
 TEST_F(etwSessionIntegrationTest, test_session_start_null_params)
 {
-    int status = TRACE_ETW_SESSION_OK;
+    int status = COM_UTIL_ETW_SESSION_OK;
 
-    EXPECT_EQ((trace_etw_session_t *)NULL,
-        trace_etw_session_start(NULL, TEST_PROVIDER_GUID, collect_callback, NULL, &status));
-    EXPECT_EQ(TRACE_ETW_SESSION_ERR_PARAM, status); // [確認_異常系] - session_name NULL で PARAM が返ること。
+    EXPECT_EQ((com_util_etw_session_t *)NULL,
+        com_util_etw_session_start(NULL, TEST_PROVIDER_GUID, collect_callback, NULL, &status));
+    EXPECT_EQ(COM_UTIL_ETW_SESSION_ERR_PARAM, status); // [確認_異常系] - session_name NULL で PARAM が返ること。
 
-    EXPECT_EQ((trace_etw_session_t *)NULL,
-        trace_etw_session_start("test", NULL, collect_callback, NULL, &status));
-    EXPECT_EQ(TRACE_ETW_SESSION_ERR_PARAM, status); // [確認_異常系] - provider_guid NULL で PARAM が返ること。
+    EXPECT_EQ((com_util_etw_session_t *)NULL,
+        com_util_etw_session_start("test", NULL, collect_callback, NULL, &status));
+    EXPECT_EQ(COM_UTIL_ETW_SESSION_ERR_PARAM, status); // [確認_異常系] - provider_guid NULL で PARAM が返ること。
 
-    EXPECT_EQ((trace_etw_session_t *)NULL,
-        trace_etw_session_start("test", TEST_PROVIDER_GUID, NULL, NULL, &status));
-    EXPECT_EQ(TRACE_ETW_SESSION_ERR_PARAM, status); // [確認_異常系] - callback NULL で PARAM が返ること。
+    EXPECT_EQ((com_util_etw_session_t *)NULL,
+        com_util_etw_session_start("test", TEST_PROVIDER_GUID, NULL, NULL, &status));
+    EXPECT_EQ(COM_UTIL_ETW_SESSION_ERR_PARAM, status); // [確認_異常系] - callback NULL で PARAM が返ること。
 }
 
 TEST_F(etwSessionIntegrationTest, test_session_start_invalid_guid)
 {
-    int status = TRACE_ETW_SESSION_OK;
+    int status = COM_UTIL_ETW_SESSION_OK;
 
-    EXPECT_EQ((trace_etw_session_t *)NULL,
-        trace_etw_session_start("test", "not-a-guid", collect_callback, NULL, &status));
-    EXPECT_EQ(TRACE_ETW_SESSION_ERR_PARAM, status); // [確認_異常系] - 不正 GUID で PARAM が返ること。
+    EXPECT_EQ((com_util_etw_session_t *)NULL,
+        com_util_etw_session_start("test", "not-a-guid", collect_callback, NULL, &status));
+    EXPECT_EQ(COM_UTIL_ETW_SESSION_ERR_PARAM, status); // [確認_異常系] - 不正 GUID で PARAM が返ること。
 }
 
 class etwSessionSubscribeIntegrationTest : public Test
@@ -83,12 +83,12 @@ class etwSessionSubscribeIntegrationTest : public Test
 protected:
     void SetUp() override
     {
-        int status = trace_etw_session_check_access();
-        ASSERT_NE(TRACE_ETW_SESSION_ERR_ACCESS, status)
+        int status = com_util_etw_session_check_access();
+        ASSERT_NE(COM_UTIL_ETW_SESSION_ERR_ACCESS, status)
             << "ETW session requires 'Performance Log Users' group membership.\n"
                "Run: net localgroup \"Performance Log Users\" %USERNAME% /add";
-        ASSERT_EQ(TRACE_ETW_SESSION_OK, status)
-            << "trace_etw_session_check_access failed (status=" << status << ")";
+        ASSERT_EQ(COM_UTIL_ETW_SESSION_OK, status)
+            << "com_util_etw_session_check_access failed (status=" << status << ")";
     }
 };
 
@@ -97,16 +97,16 @@ TEST_F(etwSessionSubscribeIntegrationTest, test_subscribe_ascii)
     std::string session_name = make_session_name();
     EventCollector collector;
 
-    trace_etw_provider_t *handle = trace_etw_provider_create(s_test_provider);
-    ASSERT_NE((trace_etw_provider_t *)NULL, handle);
+    com_util_etw_provider_t *handle = com_util_etw_provider_create(s_test_provider);
+    ASSERT_NE((com_util_etw_provider_t *)NULL, handle);
 
-    trace_etw_session_t *session = trace_etw_session_start(
+    com_util_etw_session_t *session = com_util_etw_session_start(
         session_name.c_str(), TEST_PROVIDER_GUID, collect_callback, &collector, NULL);
-    ASSERT_NE((trace_etw_session_t *)NULL, session);
+    ASSERT_NE((com_util_etw_session_t *)NULL, session);
 
     Sleep(200);
-    trace_etw_provider_write(handle, 4, NULL, "hello world"); // [手順] - ASCII メッセージを書き込む。
-    trace_etw_session_stop(session);
+    com_util_etw_provider_write(handle, 4, NULL, "hello world"); // [手順] - ASCII メッセージを書き込む。
+    com_util_etw_session_stop(session);
 
     bool found = false;
     for (const auto &evt : collector.events)
@@ -120,7 +120,7 @@ TEST_F(etwSessionSubscribeIntegrationTest, test_subscribe_ascii)
     }
     EXPECT_TRUE(found) << "Expected event 'hello world' not found";
 
-    trace_etw_provider_destroy(handle);
+    com_util_etw_provider_destroy(handle);
 }
 
 TEST_F(etwSessionSubscribeIntegrationTest, test_subscribe_utf8_japanese)
@@ -130,16 +130,16 @@ TEST_F(etwSessionSubscribeIntegrationTest, test_subscribe_utf8_japanese)
     const char *msg = "\xe8\xa8\x88\xe7\xae\x97\xe7\xb5\x90\xe6\x9e\x9c: "
                       "\xe6\x88\x90\xe5\x8a\x9f";
 
-    trace_etw_provider_t *handle = trace_etw_provider_create(s_test_provider);
-    ASSERT_NE((trace_etw_provider_t *)NULL, handle);
+    com_util_etw_provider_t *handle = com_util_etw_provider_create(s_test_provider);
+    ASSERT_NE((com_util_etw_provider_t *)NULL, handle);
 
-    trace_etw_session_t *session = trace_etw_session_start(
+    com_util_etw_session_t *session = com_util_etw_session_start(
         session_name.c_str(), TEST_PROVIDER_GUID, collect_callback, &collector, NULL);
-    ASSERT_NE((trace_etw_session_t *)NULL, session);
+    ASSERT_NE((com_util_etw_session_t *)NULL, session);
 
     Sleep(200);
-    trace_etw_provider_write(handle, 3, NULL, msg); // [手順] - 日本語 UTF-8 メッセージを書き込む。
-    trace_etw_session_stop(session);
+    com_util_etw_provider_write(handle, 3, NULL, msg); // [手順] - 日本語 UTF-8 メッセージを書き込む。
+    com_util_etw_session_stop(session);
 
     bool found = false;
     for (const auto &evt : collector.events)
@@ -153,7 +153,7 @@ TEST_F(etwSessionSubscribeIntegrationTest, test_subscribe_utf8_japanese)
     }
     EXPECT_TRUE(found) << "Expected UTF-8 Japanese event not found";
 
-    trace_etw_provider_destroy(handle);
+    com_util_etw_provider_destroy(handle);
 }
 
 TEST_F(etwSessionSubscribeIntegrationTest, test_subscribe_utf8_mixed)
@@ -166,16 +166,16 @@ TEST_F(etwSessionSubscribeIntegrationTest, test_subscribe_utf8_mixed)
                       "\xf0\x9f\x8c\x8d"
                       " World";
 
-    trace_etw_provider_t *handle = trace_etw_provider_create(s_test_provider);
-    ASSERT_NE((trace_etw_provider_t *)NULL, handle);
+    com_util_etw_provider_t *handle = com_util_etw_provider_create(s_test_provider);
+    ASSERT_NE((com_util_etw_provider_t *)NULL, handle);
 
-    trace_etw_session_t *session = trace_etw_session_start(
+    com_util_etw_session_t *session = com_util_etw_session_start(
         session_name.c_str(), TEST_PROVIDER_GUID, collect_callback, &collector, NULL);
-    ASSERT_NE((trace_etw_session_t *)NULL, session);
+    ASSERT_NE((com_util_etw_session_t *)NULL, session);
 
     Sleep(200);
-    trace_etw_provider_write(handle, 2, NULL, msg); // [手順] - 混在 UTF-8 メッセージを書き込む。
-    trace_etw_session_stop(session);
+    com_util_etw_provider_write(handle, 2, NULL, msg); // [手順] - 混在 UTF-8 メッセージを書き込む。
+    com_util_etw_session_stop(session);
 
     bool found = false;
     for (const auto &evt : collector.events)
@@ -189,7 +189,7 @@ TEST_F(etwSessionSubscribeIntegrationTest, test_subscribe_utf8_mixed)
     }
     EXPECT_TRUE(found) << "Expected UTF-8 mixed event not found";
 
-    trace_etw_provider_destroy(handle);
+    com_util_etw_provider_destroy(handle);
 }
 
 TEST_F(etwSessionSubscribeIntegrationTest, test_subscribe_multiple_levels)
@@ -197,20 +197,20 @@ TEST_F(etwSessionSubscribeIntegrationTest, test_subscribe_multiple_levels)
     std::string session_name = make_session_name();
     EventCollector collector;
 
-    trace_etw_provider_t *handle = trace_etw_provider_create(s_test_provider);
-    ASSERT_NE((trace_etw_provider_t *)NULL, handle);
+    com_util_etw_provider_t *handle = com_util_etw_provider_create(s_test_provider);
+    ASSERT_NE((com_util_etw_provider_t *)NULL, handle);
 
-    trace_etw_session_t *session = trace_etw_session_start(
+    com_util_etw_session_t *session = com_util_etw_session_start(
         session_name.c_str(), TEST_PROVIDER_GUID, collect_callback, &collector, NULL);
-    ASSERT_NE((trace_etw_session_t *)NULL, session);
+    ASSERT_NE((com_util_etw_session_t *)NULL, session);
 
     Sleep(200);
-    trace_etw_provider_write(handle, 1, NULL, "critical_msg"); // [手順] - CRITICAL を書き込む。
-    trace_etw_provider_write(handle, 2, NULL, "error_msg");    // [手順] - ERROR を書き込む。
-    trace_etw_provider_write(handle, 3, NULL, "warning_msg");  // [手順] - WARNING を書き込む。
-    trace_etw_provider_write(handle, 4, NULL, "info_msg");     // [手順] - INFO を書き込む。
-    trace_etw_provider_write(handle, 5, NULL, "verbose_msg");  // [手順] - VERBOSE を書き込む。
-    trace_etw_session_stop(session);
+    com_util_etw_provider_write(handle, 1, NULL, "critical_msg"); // [手順] - CRITICAL を書き込む。
+    com_util_etw_provider_write(handle, 2, NULL, "error_msg");    // [手順] - ERROR を書き込む。
+    com_util_etw_provider_write(handle, 3, NULL, "warning_msg");  // [手順] - WARNING を書き込む。
+    com_util_etw_provider_write(handle, 4, NULL, "info_msg");     // [手順] - INFO を書き込む。
+    com_util_etw_provider_write(handle, 5, NULL, "verbose_msg");  // [手順] - VERBOSE を書き込む。
+    com_util_etw_session_stop(session);
 
     bool saw_critical = false;
     bool saw_error = false;
@@ -253,7 +253,7 @@ TEST_F(etwSessionSubscribeIntegrationTest, test_subscribe_multiple_levels)
     EXPECT_TRUE(saw_info);     // [確認_正常系] - INFO が受信されること。
     EXPECT_TRUE(saw_verbose);  // [確認_正常系] - VERBOSE が受信されること。
 
-    trace_etw_provider_destroy(handle);
+    com_util_etw_provider_destroy(handle);
 }
 
 TEST_F(etwSessionSubscribeIntegrationTest, test_subscribe_empty_string)
@@ -261,16 +261,16 @@ TEST_F(etwSessionSubscribeIntegrationTest, test_subscribe_empty_string)
     std::string session_name = make_session_name();
     EventCollector collector;
 
-    trace_etw_provider_t *handle = trace_etw_provider_create(s_test_provider);
-    ASSERT_NE((trace_etw_provider_t *)NULL, handle);
+    com_util_etw_provider_t *handle = com_util_etw_provider_create(s_test_provider);
+    ASSERT_NE((com_util_etw_provider_t *)NULL, handle);
 
-    trace_etw_session_t *session = trace_etw_session_start(
+    com_util_etw_session_t *session = com_util_etw_session_start(
         session_name.c_str(), TEST_PROVIDER_GUID, collect_callback, &collector, NULL);
-    ASSERT_NE((trace_etw_session_t *)NULL, session);
+    ASSERT_NE((com_util_etw_session_t *)NULL, session);
 
     Sleep(200);
-    trace_etw_provider_write(handle, 5, NULL, ""); // [手順] - 空文字列を書き込む。
-    trace_etw_session_stop(session);
+    com_util_etw_provider_write(handle, 5, NULL, ""); // [手順] - 空文字列を書き込む。
+    com_util_etw_session_stop(session);
 
     bool found = false;
     for (const auto &evt : collector.events)
@@ -284,7 +284,7 @@ TEST_F(etwSessionSubscribeIntegrationTest, test_subscribe_empty_string)
     }
     EXPECT_TRUE(found) << "Expected empty-string event not found";
 
-    trace_etw_provider_destroy(handle);
+    com_util_etw_provider_destroy(handle);
 }
 
 #elif defined(PLATFORM_LINUX)

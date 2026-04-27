@@ -107,36 +107,36 @@ Mock_com_util::Mock_com_util()
         .WillByDefault(Return(-1));
     ON_CALL(*this, com_util_file_close(_))
         .WillByDefault(Return());
-    ON_CALL(*this, trace_logger_create())
+    ON_CALL(*this, com_util_logger_create())
         .WillByDefault(Return(nullptr));
-    ON_CALL(*this, trace_logger_destroy(_))
+    ON_CALL(*this, com_util_logger_destroy(_))
         .WillByDefault(Return());
-    ON_CALL(*this, trace_logger_start(_))
+    ON_CALL(*this, com_util_logger_start(_))
         .WillByDefault(Return(0));
-    ON_CALL(*this, trace_logger_stop(_))
+    ON_CALL(*this, com_util_logger_stop(_))
         .WillByDefault(Return(0));
-    ON_CALL(*this, trace_logger_write(_, _, _))
+    ON_CALL(*this, com_util_logger_write(_, _, _))
         .WillByDefault(Return(0));
-    ON_CALL(*this, trace_logger_write_hex(_, _, _, _, _))
+    ON_CALL(*this, com_util_logger_write_hex(_, _, _, _, _))
         .WillByDefault(Return(0));
-    ON_CALL(*this, trace_logger_writef(_, _, _))
+    ON_CALL(*this, com_util_logger_writef(_, _, _))
         .WillByDefault(Return(0));
-    ON_CALL(*this, trace_logger_write_hexf(_, _, _, _, _))
+    ON_CALL(*this, com_util_logger_write_hexf(_, _, _, _, _))
         .WillByDefault(Return(0));
-    ON_CALL(*this, trace_logger_set_name(_, _, _))
+    ON_CALL(*this, com_util_logger_set_name(_, _, _))
         .WillByDefault(Return(0));
-    ON_CALL(*this, trace_logger_set_os_level(_, _))
+    ON_CALL(*this, com_util_logger_set_os_level(_, _))
         .WillByDefault(Return(0));
-    ON_CALL(*this, trace_logger_set_file_level(_, _, _, _, _))
+    ON_CALL(*this, com_util_logger_set_file_level(_, _, _, _, _))
         .WillByDefault(Return(0));
-    ON_CALL(*this, trace_logger_set_stderr_level(_, _))
+    ON_CALL(*this, com_util_logger_set_stderr_level(_, _))
         .WillByDefault(Return(0));
-    ON_CALL(*this, trace_logger_get_os_level(_))
-        .WillByDefault(Return(TRACE_LEVEL_NONE));
-    ON_CALL(*this, trace_logger_get_file_level(_))
-        .WillByDefault(Return(TRACE_LEVEL_NONE));
-    ON_CALL(*this, trace_logger_get_stderr_level(_))
-        .WillByDefault(Return(TRACE_LEVEL_NONE));
+    ON_CALL(*this, com_util_logger_get_os_level(_))
+        .WillByDefault(Return(COM_UTIL_LOG_LEVEL_NONE));
+    ON_CALL(*this, com_util_logger_get_file_level(_))
+        .WillByDefault(Return(COM_UTIL_LOG_LEVEL_NONE));
+    ON_CALL(*this, com_util_logger_get_stderr_level(_))
+        .WillByDefault(Return(COM_UTIL_LOG_LEVEL_NONE));
 
     // clock
     ON_CALL(*this, com_util_get_monotonic_ms())
@@ -151,9 +151,9 @@ Mock_com_util::Mock_com_util()
         .WillByDefault(Return());
 
     // console
-    ON_CALL(*this, console_init())
+    ON_CALL(*this, com_util_console_init())
         .WillByDefault(Return());
-    ON_CALL(*this, console_dispose())
+    ON_CALL(*this, com_util_console_dispose())
         .WillByDefault(Return());
 
     // sync
@@ -165,56 +165,56 @@ Mock_com_util::Mock_com_util()
         .WillByDefault(Return());
 
     // runtime - module_info
-    ON_CALL(*this, module_info_get_path(_, _, _))
+    ON_CALL(*this, com_util_module_get_path(_, _, _))
         .WillByDefault(Return(-1));
-    ON_CALL(*this, module_info_get_basename(_, _, _))
+    ON_CALL(*this, com_util_module_get_basename(_, _, _))
         .WillByDefault(Return(-1));
 
-    // runtime - symbol_loader
-    ON_CALL(*this, symbol_loader_resolve(_))
+    // runtime - sym_loader
+    ON_CALL(*this, com_util_sym_loader_resolve(_))
         .WillByDefault(Return(nullptr));
-    ON_CALL(*this, symbol_loader_is_default(_))
+    ON_CALL(*this, com_util_sym_loader_is_default(_))
         .WillByDefault(Return(0));
-    ON_CALL(*this, symbol_loader_init(_, _, _))
+    ON_CALL(*this, com_util_sym_loader_init(_, _, _))
         .WillByDefault(Return());
-    ON_CALL(*this, symbol_loader_dispose(_, _))
+    ON_CALL(*this, com_util_sym_loader_dispose(_, _))
         .WillByDefault(Return());
-    ON_CALL(*this, symbol_loader_info(_, _))
+    ON_CALL(*this, com_util_sym_loader_info(_, _))
         .WillByDefault(Return(-1));
 
-    // trace - trace_file_sink
-    ON_CALL(*this, trace_file_sink_create(_, _, _))
+    // trace - log_file_sink
+    ON_CALL(*this, com_util_log_file_sink_create(_, _, _))
         .WillByDefault(Return(nullptr));
-    ON_CALL(*this, trace_file_sink_write(_, _, _))
+    ON_CALL(*this, com_util_log_file_sink_write(_, _, _))
         .WillByDefault(Return(-1));
-    ON_CALL(*this, trace_file_sink_destroy(_))
+    ON_CALL(*this, com_util_log_file_sink_destroy(_))
         .WillByDefault(Return());
 
 #if defined(PLATFORM_LINUX)
-    // trace - trace_syslog_sink (Linux only)
-    ON_CALL(*this, trace_syslog_sink_create(_, _))
+    // trace - syslog_sink (Linux only)
+    ON_CALL(*this, com_util_syslog_sink_create(_, _))
         .WillByDefault(Return(nullptr));
-    ON_CALL(*this, trace_syslog_sink_write(_, _, _))
+    ON_CALL(*this, com_util_syslog_sink_write(_, _, _))
         .WillByDefault(Return(-1));
-    ON_CALL(*this, trace_syslog_sink_rename(_, _))
+    ON_CALL(*this, com_util_syslog_sink_rename(_, _))
         .WillByDefault(Return(-1));
-    ON_CALL(*this, trace_syslog_sink_destroy(_))
+    ON_CALL(*this, com_util_syslog_sink_destroy(_))
         .WillByDefault(Return());
 #endif /* PLATFORM_LINUX */
 
 #if defined(PLATFORM_WINDOWS)
     // trace - trace_etw (Windows only)
-    ON_CALL(*this, trace_etw_provider_create(_))
+    ON_CALL(*this, com_util_etw_provider_create(_))
         .WillByDefault(Return(nullptr));
-    ON_CALL(*this, trace_etw_provider_write(_, _, _, _))
+    ON_CALL(*this, com_util_etw_provider_write(_, _, _, _))
         .WillByDefault(Return(-1));
-    ON_CALL(*this, trace_etw_provider_destroy(_))
+    ON_CALL(*this, com_util_etw_provider_destroy(_))
         .WillByDefault(Return());
-    ON_CALL(*this, trace_etw_session_check_access())
+    ON_CALL(*this, com_util_etw_session_check_access())
         .WillByDefault(Return(-1));
-    ON_CALL(*this, trace_etw_session_start(_, _, _, _, _))
+    ON_CALL(*this, com_util_etw_session_start(_, _, _, _, _))
         .WillByDefault(Return(nullptr));
-    ON_CALL(*this, trace_etw_session_stop(_))
+    ON_CALL(*this, com_util_etw_session_stop(_))
         .WillByDefault(Return());
 #endif /* PLATFORM_WINDOWS */
 

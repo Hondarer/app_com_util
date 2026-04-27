@@ -1,0 +1,93 @@
+#ifndef COM_UTIL_LOG_FILE_H
+#define COM_UTIL_LOG_FILE_H
+
+/**
+ *  @file           log_file.h
+ *  @brief          ファイルベーストレースプロバイダライブラリ。
+ *  @details        トレースメッセージをローテーション付きテキストファイルへ同期書き込みする
+ *                  クロスプラットフォームプロバイダです。\n
+ *                  com_util_etw_provider (Windows ETW) および com_util_syslog_sink (Linux syslog) と
+ *                  同じ init / write / dispose インターフェースを提供します。
+ *
+ *  @par            出力フォーマット
+ *  @code
+   2026-03-31 12:34:56.789 I メッセージテキスト
+ *  @endcode
+ *  レベル文字: C=CRITICAL / E=ERROR / W=WARNING / I=INFO / V=VERBOSE
+ */
+
+#include <stddef.h>
+#include <com_util/base/platform.h>
+#include <com_util_export.h>
+#include <com_util/trace/logger.h>
+
+/* ===== 設定定数 ===== */
+
+/**
+ *  @def            COM_UTIL_LOG_FILE_SINK_DEFAULT_MAX_BYTES
+ *  @brief          トレースファイル 1 世代あたりの既定最大サイズ (バイト)。
+ *  @details        この値を超えるとローテーションが実行されます。\n
+ *                  com_util_log_file_sink_create の max_bytes に 0 を指定した場合に使用されます。
+ */
+#define COM_UTIL_LOG_FILE_SINK_DEFAULT_MAX_BYTES  ((size_t)(10 * 1024 * 1024))
+
+/**
+ *  @def            COM_UTIL_LOG_FILE_SINK_DEFAULT_GENERATIONS
+ *  @brief          保持するトレースファイル世代数の既定値。
+ *  @details        ローテーション時に path.1 〜 path.N のファイルを保持します。\n
+ *                  com_util_log_file_sink_create の generations に 0 以下を指定した場合に使用されます。
+ */
+#define COM_UTIL_LOG_FILE_SINK_DEFAULT_GENERATIONS  5
+
+/* ===== 不透明ハンドル型 ===== */
+
+/** ファイルトレースプロバイダハンドル (不透明型)。 */
+typedef struct com_util_log_file_sink com_util_log_file_sink_t;
+
+/* ===== API 関数 ===== */
+
+#ifdef __cplusplus
+extern "C"
+{
+#endif /* __cplusplus */
+
+    /**
+     *  @brief          ファイルトレースプロバイダを初期化する。
+     *  @details        指定されたファイルパスへの書き込みを開始します。\n
+     *                  ファイルが存在する場合は追記します。存在しない場合は新規作成します。\n
+     *                  max_bytes に 0 を指定した場合は COM_UTIL_LOG_FILE_SINK_DEFAULT_MAX_BYTES を使用します。\n
+     *                  generations に 0 以下を指定した場合は COM_UTIL_LOG_FILE_SINK_DEFAULT_GENERATIONS を使用します。
+     *
+     *  @param[in]      path         出力ファイルパス。NULL の場合は NULL を返します。
+     *  @param[in]      max_bytes    1 ファイルあたりの最大バイト数。0 でデフォルト値を使用。
+     *  @param[in]      generations  保持する旧世代数。0 以下でデフォルト値を使用。
+     *  @return         成功時: ハンドル。失敗時: NULL。
+     */
+    COM_UTIL_EXPORT com_util_log_file_sink_t *COM_UTIL_API
+        com_util_log_file_sink_create(const char *path, size_t max_bytes, int generations);
+
+    /**
+     *  @brief          ファイルへトレースメッセージを書き込む。
+     *
+     *  @param[in]      handle   com_util_log_file_sink_create の戻り値。NULL は無視。
+     *  @param[in]      level    トレースレベル。
+     *  @param[in]      message  null 終端 UTF-8 文字列。NULL は無視。
+     *  @return         成功 0 / 失敗 -1。
+     */
+    COM_UTIL_EXPORT int COM_UTIL_API
+        com_util_log_file_sink_write(com_util_log_file_sink_t *handle, int level,
+                                  const char *message);
+
+    /**
+     *  @brief          ファイルトレースプロバイダを終了する。
+     *
+     *  @param[in]      handle   com_util_log_file_sink_create の戻り値。NULL は無視。
+     */
+    COM_UTIL_EXPORT void COM_UTIL_API
+        com_util_log_file_sink_destroy(com_util_log_file_sink_t *handle);
+
+#ifdef __cplusplus
+}
+#endif /* __cplusplus */
+
+#endif /* COM_UTIL_LOG_FILE_H */

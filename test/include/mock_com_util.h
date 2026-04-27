@@ -13,15 +13,15 @@
 #include <com_util/crt/string.h>
 #include <com_util/crt/unistd.h>
 #include <com_util/crt/file.h>
-#include <com_util/trace/trace.h>
+#include <com_util/trace/logger.h>
 #include <com_util/clock/clock.h>
 #include <com_util/console/console.h>
 #include <com_util/sync/sync.h>
-#include <com_util/runtime/module_info.h>
-#include <com_util/runtime/symbol_loader.h>
-#include <com_util/trace/trace_file.h>
-#include <com_util/trace/trace_syslog.h>
-#include <com_util/trace/trace_etw.h>
+#include <com_util/runtime/module.h>
+#include <com_util/runtime/sym_loader.h>
+#include <com_util/trace/log_file.h>
+#include <com_util/trace/syslog.h>
+#include <com_util/trace/etw.h>
 
 class Mock_com_util
 {
@@ -41,7 +41,7 @@ public:
 
     // crt
     MOCK_METHOD(FILE *, com_util_fopen,  (const char *, const char *, int *));
-    MOCK_METHOD(int,    com_util_stat,   (util_file_stat_t *, const char *));
+    MOCK_METHOD(int,    com_util_stat,   (com_util_file_stat_t *, const char *));
     MOCK_METHOD(int,    com_util_open,   (const char *, int, int));
     MOCK_METHOD(int,    com_util_access, (const char *, int));
     MOCK_METHOD(int,    com_util_mkdir,  (const char *));
@@ -83,8 +83,8 @@ public:
     MOCK_METHOD(int, com_util_strcat,  (char *, size_t, const char *));
     MOCK_METHOD(int, com_util_wcscpy,  (wchar_t *, size_t, const wchar_t *));
     // crt - sys/stat
-    MOCK_METHOD(int, com_util_stat_fmt,   (util_file_stat_t *, const char *));
-    MOCK_METHOD(int, com_util_vstat_fmt,  (util_file_stat_t *, const char *));
+    MOCK_METHOD(int, com_util_stat_fmt,   (com_util_file_stat_t *, const char *));
+    MOCK_METHOD(int, com_util_vstat_fmt,  (com_util_file_stat_t *, const char *));
     MOCK_METHOD(int, com_util_mkdir_fmt,  (const char *));
     MOCK_METHOD(int, com_util_vmkdir_fmt, (const char *));
     // crt - file
@@ -95,35 +95,35 @@ public:
     MOCK_METHOD(void, com_util_file_close,    (com_util_file_t *));
 
     // 初期化・終了
-    MOCK_METHOD(trace_logger_t *, trace_logger_create, ());
-    MOCK_METHOD(void, trace_logger_destroy, (trace_logger_t *));
+    MOCK_METHOD(com_util_logger_t *, com_util_logger_create, ());
+    MOCK_METHOD(void, com_util_logger_destroy, (com_util_logger_t *));
 
     // 制御
-    MOCK_METHOD(int, trace_logger_start, (trace_logger_t *));
-    MOCK_METHOD(int, trace_logger_stop, (trace_logger_t *));
+    MOCK_METHOD(int, com_util_logger_start, (com_util_logger_t *));
+    MOCK_METHOD(int, com_util_logger_stop, (com_util_logger_t *));
 
     // 書き込み (固定引数版)
-    MOCK_METHOD(int, trace_logger_write, (trace_logger_t *, trace_level_t, const char *));
-    MOCK_METHOD(int, trace_logger_write_hex, (trace_logger_t *, trace_level_t,
+    MOCK_METHOD(int, com_util_logger_write, (com_util_logger_t *, com_util_log_level_t, const char *));
+    MOCK_METHOD(int, com_util_logger_write_hex, (com_util_logger_t *, com_util_log_level_t,
                                       const void *, size_t, const char *));
 
     // 書き込み (可変引数対応: vsnprintf 展開後の文字列を受け取る代替メソッド)
-    MOCK_METHOD(int, trace_logger_writef,
-                (trace_logger_t *, trace_level_t, const char *));
-    MOCK_METHOD(int, trace_logger_write_hexf,
-                (trace_logger_t *, trace_level_t, const void *, size_t, const char *));
+    MOCK_METHOD(int, com_util_logger_writef,
+                (com_util_logger_t *, com_util_log_level_t, const char *));
+    MOCK_METHOD(int, com_util_logger_write_hexf,
+                (com_util_logger_t *, com_util_log_level_t, const void *, size_t, const char *));
 
     // 設定
-    MOCK_METHOD(int, trace_logger_set_name, (trace_logger_t *, const char *, int64_t));
-    MOCK_METHOD(int, trace_logger_set_os_level, (trace_logger_t *, trace_level_t));
-    MOCK_METHOD(int, trace_logger_set_file_level,
-                (trace_logger_t *, const char *, trace_level_t, size_t, int));
-    MOCK_METHOD(int, trace_logger_set_stderr_level, (trace_logger_t *, trace_level_t));
+    MOCK_METHOD(int, com_util_logger_set_name, (com_util_logger_t *, const char *, int64_t));
+    MOCK_METHOD(int, com_util_logger_set_os_level, (com_util_logger_t *, com_util_log_level_t));
+    MOCK_METHOD(int, com_util_logger_set_file_level,
+                (com_util_logger_t *, const char *, com_util_log_level_t, size_t, int));
+    MOCK_METHOD(int, com_util_logger_set_stderr_level, (com_util_logger_t *, com_util_log_level_t));
 
     // 取得
-    MOCK_METHOD(trace_level_t, trace_logger_get_os_level, (trace_logger_t *));
-    MOCK_METHOD(trace_level_t, trace_logger_get_file_level, (trace_logger_t *));
-    MOCK_METHOD(trace_level_t, trace_logger_get_stderr_level, (trace_logger_t *));
+    MOCK_METHOD(com_util_log_level_t, com_util_logger_get_os_level, (com_util_logger_t *));
+    MOCK_METHOD(com_util_log_level_t, com_util_logger_get_file_level, (com_util_logger_t *));
+    MOCK_METHOD(com_util_log_level_t, com_util_logger_get_stderr_level, (com_util_logger_t *));
 
     // clock
     MOCK_METHOD(uint64_t, com_util_get_monotonic_ms, ());
@@ -133,8 +133,8 @@ public:
     MOCK_METHOD(void, com_util_get_realtime_deadline_ms, (uint64_t, struct timespec *));
 
     // console
-    MOCK_METHOD(void, console_init, ());
-    MOCK_METHOD(void, console_dispose, ());
+    MOCK_METHOD(void, com_util_console_init, ());
+    MOCK_METHOD(void, com_util_console_dispose, ());
 
     // sync
     MOCK_METHOD(int,  com_util_condvar_timedwait, (com_util_condvar_t *, com_util_mutex_t *, uint32_t));
@@ -142,38 +142,38 @@ public:
     MOCK_METHOD(void, com_util_thread_join, (com_util_thread_t *));
 
     // runtime - module_info
-    MOCK_METHOD(int, module_info_get_path,     (char *, size_t, const void *));
-    MOCK_METHOD(int, module_info_get_basename, (char *, size_t, const void *));
+    MOCK_METHOD(int, com_util_module_get_path,     (char *, size_t, const void *));
+    MOCK_METHOD(int, com_util_module_get_basename, (char *, size_t, const void *));
 
-    // runtime - symbol_loader
-    MOCK_METHOD(void *, symbol_loader_resolve,    (symbol_loader_entry_t *));
-    MOCK_METHOD(int,    symbol_loader_is_default, (symbol_loader_entry_t *));
-    MOCK_METHOD(void,   symbol_loader_init,    (symbol_loader_entry_t *const *, size_t, const char *));
-    MOCK_METHOD(void,   symbol_loader_dispose, (symbol_loader_entry_t *const *, size_t));
-    MOCK_METHOD(int,    symbol_loader_info,    (symbol_loader_entry_t *const *, size_t));
+    // runtime - sym_loader
+    MOCK_METHOD(void *, com_util_sym_loader_resolve,    (com_util_sym_loader_entry_t *));
+    MOCK_METHOD(int,    com_util_sym_loader_is_default, (com_util_sym_loader_entry_t *));
+    MOCK_METHOD(void,   com_util_sym_loader_init,    (com_util_sym_loader_entry_t *const *, size_t, const char *));
+    MOCK_METHOD(void,   com_util_sym_loader_dispose, (com_util_sym_loader_entry_t *const *, size_t));
+    MOCK_METHOD(int,    com_util_sym_loader_info,    (com_util_sym_loader_entry_t *const *, size_t));
 
-    // trace - trace_file_sink
-    MOCK_METHOD(trace_file_sink_t *, trace_file_sink_create, (const char *, size_t, int));
-    MOCK_METHOD(int,  trace_file_sink_write,   (trace_file_sink_t *, int, const char *));
-    MOCK_METHOD(void, trace_file_sink_destroy, (trace_file_sink_t *));
+    // trace - log_file_sink
+    MOCK_METHOD(com_util_log_file_sink_t *, com_util_log_file_sink_create, (const char *, size_t, int));
+    MOCK_METHOD(int,  com_util_log_file_sink_write,   (com_util_log_file_sink_t *, int, const char *));
+    MOCK_METHOD(void, com_util_log_file_sink_destroy, (com_util_log_file_sink_t *));
 
 #if defined(PLATFORM_LINUX)
-    // trace - trace_syslog_sink (Linux only)
-    MOCK_METHOD(trace_syslog_sink_t *, trace_syslog_sink_create, (const char *, int));
-    MOCK_METHOD(int,  trace_syslog_sink_write,   (trace_syslog_sink_t *, int, const char *));
-    MOCK_METHOD(int,  trace_syslog_sink_rename,  (trace_syslog_sink_t *, const char *));
-    MOCK_METHOD(void, trace_syslog_sink_destroy, (trace_syslog_sink_t *));
+    // trace - syslog_sink (Linux only)
+    MOCK_METHOD(com_util_syslog_sink_t *, com_util_syslog_sink_create, (const char *, int));
+    MOCK_METHOD(int,  com_util_syslog_sink_write,   (com_util_syslog_sink_t *, int, const char *));
+    MOCK_METHOD(int,  com_util_syslog_sink_rename,  (com_util_syslog_sink_t *, const char *));
+    MOCK_METHOD(void, com_util_syslog_sink_destroy, (com_util_syslog_sink_t *));
 #endif /* PLATFORM_LINUX */
 
 #if defined(PLATFORM_WINDOWS)
     // trace - trace_etw (Windows only)
-    MOCK_METHOD(trace_etw_provider_t *, trace_etw_provider_create, (trace_etw_provider_ref_t));
-    MOCK_METHOD(int,  trace_etw_provider_write,   (trace_etw_provider_t *, int, const char *, const char *));
-    MOCK_METHOD(void, trace_etw_provider_destroy, (trace_etw_provider_t *));
-    MOCK_METHOD(int,  trace_etw_session_check_access, ());
-    MOCK_METHOD(trace_etw_session_t *, trace_etw_session_start,
-                (const char *, const char *, trace_etw_event_callback_t, void *, int *));
-    MOCK_METHOD(void, trace_etw_session_stop, (trace_etw_session_t *));
+    MOCK_METHOD(com_util_etw_provider_t *, com_util_etw_provider_create, (com_util_etw_provider_ref_t));
+    MOCK_METHOD(int,  com_util_etw_provider_write,   (com_util_etw_provider_t *, int, const char *, const char *));
+    MOCK_METHOD(void, com_util_etw_provider_destroy, (com_util_etw_provider_t *));
+    MOCK_METHOD(int,  com_util_etw_session_check_access, ());
+    MOCK_METHOD(com_util_etw_session_t *, com_util_etw_session_start,
+                (const char *, const char *, com_util_etw_event_callback_t, void *, int *));
+    MOCK_METHOD(void, com_util_etw_session_stop, (com_util_etw_session_t *));
 #endif /* PLATFORM_WINDOWS */
 
     Mock_com_util();

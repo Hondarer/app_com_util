@@ -1,0 +1,176 @@
+/**
+ *******************************************************************************
+ *  @file           sym_loader.h
+ *  @brief          関数動的解決機構 (symbol loader) の公開 API ヘッダー。
+ *  @author         c-modenization-kit sample team
+ *  @date           2026/03/17
+ *  @version        1.0.0
+ *
+ *  sym_loader は、テキスト設定ファイルから関数シンボルとライブラリ名を読み込み、
+ *  実行時に動的リンクで関数を解決するキャッシュ機構です。
+ *
+ *  使用方法:
+ *  1. com_util_sym_loader_entry_t を COM_UTIL_SYM_LOADER_ENTRY_INIT マクロで静的初期化する。
+ *  2. com_util_sym_loader_init() でテキスト設定ファイルを読み込む (DllMain/constructor から呼ぶ)。
+ *  3. com_util_sym_loader_resolve_as() で関数ポインタを取得して呼び出す。
+ *  4. com_util_sym_loader_dispose() でリソースを解放する (DllMain/destructor から呼ぶ)。
+ *
+ *  @copyright      Copyright (C) Tetsuo Honda. 2026. All rights reserved.
+ *
+ *******************************************************************************
+ */
+
+#ifndef COM_UTIL_SYM_LOADER_H
+#define COM_UTIL_SYM_LOADER_H
+
+#include <com_util/base/platform.h>
+#include <com_util_export.h>
+
+#if defined(PLATFORM_LINUX)
+    #ifndef _GNU_SOURCE
+        #define _GNU_SOURCE
+    #endif /* _GNU_SOURCE */
+#endif /* PLATFORM_LINUX */
+
+#include <stddef.h>
+
+#if defined(PLATFORM_LINUX)
+    #include <dlfcn.h>
+    #include <pthread.h>
+#elif defined(PLATFORM_WINDOWS)
+    #include <com_util/base/windows_sdk.h>
+#endif /* PLATFORM_ */
+
+#ifdef __cplusplus
+extern "C"
+{
+#endif /* __cplusplus */
+
+/**
+ *  @def            COM_UTIL_MODULE_HANDLE
+ *  @brief          Linux/Windows 共通のモジュールハンドル型。
+ *  @details        sym_loader が内部で保持する動的ロード済みモジュールの不透明ハンドルです。\n
+ *                  Linux では `dlopen()` が返す `void *`、Windows では `LoadLibrary()` 系が返す
+ *                  `HMODULE` を表します。
+ */
+#ifdef DOXYGEN
+    #define COM_UTIL_MODULE_HANDLE void *
+#elif defined(PLATFORM_LINUX)
+    #define COM_UTIL_MODULE_HANDLE void *
+#elif defined(PLATFORM_WINDOWS)
+    #define COM_UTIL_MODULE_HANDLE HMODULE
+#endif
+
+#define COM_UTIL_SYM_LOADER_NAME_MAX 256 /**< lib_name / func_name 配列の最大長 (終端 '\0' を含む)。 */
+
+    /**
+     *******************************************************************************
+     *  @brief          関数ポインタキャッシュエントリ。
+     *
+     *  @details        ライブラリ名・関数名・ハンドル・関数ポインタおよび排他制御用ロックを管理します。\n
+     *                  静的変数として定義する場合は COM_UTIL_SYM_LOADER_ENTRY_INIT マクロで初期化してください。
+     *******************************************************************************
+     */
+    typedef struct
+    {
+        const char *func_key;                              /**< この関数インスタンスの識別キー。 */
+        char lib_name[COM_UTIL_SYM_LOADER_NAME_MAX];      /**< 拡張子なしライブラリ名。[0]=='\0' = 未設定。 */
+        char func_name[COM_UTIL_SYM_LOADER_NAME_MAX];     /**< 関数シンボル名。[0]=='\0' = 未設定。 */
+        COM_UTIL_MODULE_HANDLE handle;                     /**< キャッシュ済みハンドル (NULL = 未ロード)。 */
+        void *func_ptr;                                    /**< キャッシュ済み関数ポインタ (NULL = 未取得)。 */
+        int resolved;                                      /**< 解決済フラグ (0 = 未解決)。 */
+        int padding;                                       /**< パディング。 */
+#ifdef DOXYGEN
+        void *lock_obj; /**< ロード処理を保護する排他制御オブジェクト。Linux は mutex、Windows は SRW ロック。 */
+#elif defined(PLATFORM_LINUX)
+        pthread_mutex_t mutex; /**< ロード処理を保護する mutex (Linux)。 */
+#elif defined(PLATFORM_WINDOWS)
+        SRWLOCK lock; /**< ロード処理を保護する SRW ロック (Windows)。 */
+#endif /* PLATFORM_ */
+    } com_util_sym_loader_entry_t;
+
+/**
+ *  @def            COM_UTIL_SYM_LOADER_ENTRY_INIT
+ *  @brief          com_util_sym_loader_entry_t 静的変数の初期化マクロ。
+ *
+ *  @param[in]      key     この関数インスタンスの識別キー (文字列リテラル)。
+ *  @param[in]      type    格納する関数ポインタの型 (例: sample_func_t)。
+ */
+#ifdef DOXYGEN
+    #define COM_UTIL_SYM_LOADER_ENTRY_INIT(key, type) {(key), {0}, {0}, NULL, NULL, 0, 0, NULL}
+#elif defined(PLATFORM_LINUX)
+    #define COM_UTIL_SYM_LOADER_ENTRY_INIT(key, type) {(key), {0}, {0}, NULL, NULL, 0, 0, PTHREAD_MUTEX_INITIALIZER}
+#elif defined(PLATFORM_WINDOWS)
+    #define COM_UTIL_SYM_LOADER_ENTRY_INIT(key, type) {(key), {0}, {0}, NULL, NULL, 0, 0, SRWLOCK_INIT}
+#endif
+
+    /**
+     *******************************************************************************
+     *  @brief          拡張関数ポインタを返す (内部用)。
+     *
+     *  @param[in,out]  fobj com_util_sym_loader_entry_t へのポインタ。
+     *  @return         成功時 void * (関数ポインタ)、失敗時 NULL。
+     *******************************************************************************
+     */
+    COM_UTIL_EXPORT void *COM_UTIL_API com_util_sym_loader_resolve(com_util_sym_loader_entry_t *fobj);
+
+/**
+ *  @def            com_util_sym_loader_resolve_as
+ *  @brief          拡張関数ポインタを返す。
+ *
+ *  @param[in]      fobj com_util_sym_loader_entry_t へのポインタ。
+ *  @param[in]      type COM_UTIL_SYM_LOADER_ENTRY_INIT で指定したものと同じ関数ポインタ型。
+ */
+#define com_util_sym_loader_resolve_as(fobj, type) ((type)com_util_sym_loader_resolve(fobj))
+
+    /**
+     *******************************************************************************
+     *  @brief          com_util_sym_loader_entry_t が明示的デフォルトかどうかを返す。
+     *
+     *  @param[in]      fobj com_util_sym_loader_entry_t へのポインタ。
+     *  @return         明示的デフォルトの場合は 1、それ以外は 0。
+     *******************************************************************************
+     */
+    COM_UTIL_EXPORT int COM_UTIL_API com_util_sym_loader_is_default(com_util_sym_loader_entry_t *fobj);
+
+    /**
+     *******************************************************************************
+     *  @brief          com_util_sym_loader_entry_t ポインタ配列を初期化する。
+     *
+     *  @param[in]      fobj_array  com_util_sym_loader_entry_t ポインタ配列。
+     *  @param[in]      fobj_length 配列の要素数。
+     *  @param[in]      configpath  定義ファイルのパス。
+     *******************************************************************************
+     */
+    COM_UTIL_EXPORT void COM_UTIL_API com_util_sym_loader_init(com_util_sym_loader_entry_t *const *fobj_array,
+                                                                const size_t fobj_length,
+                                                                const char *configpath);
+
+    /**
+     *******************************************************************************
+     *  @brief          com_util_sym_loader_entry_t ポインタ配列を解放する。
+     *
+     *  @param[in]      fobj_array  com_util_sym_loader_entry_t ポインタ配列。
+     *  @param[in]      fobj_length 配列の要素数。
+     *******************************************************************************
+     */
+    COM_UTIL_EXPORT void COM_UTIL_API
+        com_util_sym_loader_dispose(com_util_sym_loader_entry_t *const *fobj_array, const size_t fobj_length);
+
+    /**
+     *******************************************************************************
+     *  @brief          com_util_sym_loader_entry_t ポインタ配列の内容を標準出力に表示する。
+     *
+     *  @param[in]      fobj_array      com_util_sym_loader_entry_t ポインタ配列。
+     *  @param[in]      fobj_length     配列の要素数。
+     *  @return         すべてのエントリが正常に解決されている場合は 0、1 つでも失敗している場合は -1。
+     *******************************************************************************
+     */
+    COM_UTIL_EXPORT int COM_UTIL_API
+        com_util_sym_loader_info(com_util_sym_loader_entry_t *const *fobj_array, const size_t fobj_length);
+
+#ifdef __cplusplus
+}
+#endif /* __cplusplus */
+
+#endif /* COM_UTIL_SYM_LOADER_H */

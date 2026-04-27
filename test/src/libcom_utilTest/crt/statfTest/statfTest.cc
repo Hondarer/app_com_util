@@ -27,7 +27,7 @@ TEST_F(statfTest, test_null_format)
 {
     // Arrange
     Mock_com_util mock_com_util;
-    util_file_stat_t st;
+    com_util_file_stat_t st;
 
     // Pre-Assert
     EXPECT_CALL(mock_com_util, com_util_stat(_, _))
@@ -44,7 +44,7 @@ TEST_F(statfTest, test_buffer_overflow)
 {
     // Arrange
     Mock_com_util mock_com_util;
-    util_file_stat_t st;
+    com_util_file_stat_t st;
     // 非常に長いファイル名を生成 (バッファサイズを超える)
     char long_string[5000];
     memset(long_string, 'a', sizeof(long_string) - 1);
@@ -65,7 +65,7 @@ TEST_F(statfTest, test_successful_call_with_format)
 {
     // Arrange
     Mock_com_util mock_com_util;
-    util_file_stat_t st;
+    com_util_file_stat_t st;
 
     // Pre-Assert
     EXPECT_CALL(mock_com_util, com_util_stat(&st, StrEq("test_123.txt")))
@@ -82,7 +82,7 @@ TEST_F(statfTest, test_successful_call_with_multiple_parameters)
 {
     // Arrange
     Mock_com_util mock_com_util;
-    util_file_stat_t st;
+    com_util_file_stat_t st;
 
     // Pre-Assert
     EXPECT_CALL(mock_com_util, com_util_stat(&st, StrEq("output_1_2_3.txt")))
@@ -99,7 +99,7 @@ TEST_F(statfTest, test_stat_returns_error)
 {
     // Arrange
     Mock_com_util mock_com_util;
-    util_file_stat_t st;
+    com_util_file_stat_t st;
 
     // Pre-Assert
     EXPECT_CALL(mock_com_util, com_util_stat(&st, StrEq("nonexistent.txt")))

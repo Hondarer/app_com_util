@@ -58,6 +58,27 @@
  */
 #define PLATFORM_PATH_SEP_CHR '/'
 
+#define COM_UTIL_PATH_CONCAT_COUNT_IMPL(_1,  _2,  _3,  _4,  _5,  _6,  _7,  _8, \
+                                        _9,  _10, _11, _12, _13, _14, _15, _16, count, ...) count
+#define COM_UTIL_PATH_CONCAT_COUNT(...) \
+    COM_UTIL_PATH_CONCAT_COUNT_IMPL(__VA_ARGS__, 16, 15, 14, 13, 12, 11, 10, 9, 8, 7, 6, 5, 4, 3, 2, 1)
+
+/**
+ *  @def            com_util_path_concat(path_out, path_size, errno_out, ...)
+ *  @brief          パス断片を指定順にそのまま連結します。
+ *
+ *  @param[out]     path_out   連結結果の格納先。NULL を渡してはなりません。
+ *  @param[in]      path_size  @p path_out のサイズ (バイト)。0 を渡してはなりません。
+ *  @param[out]     errno_out  エラー詳細の格納先。NULL 可。
+ *  @param[in]      ...        連結する UTF-8 文字列断片。少なくとも 1 つ必要です。
+ *
+ *  @details
+ *  断片は自動補正せず、そのまま連結されます。\n
+ *  パス区切り文字が必要な場合は @ref PLATFORM_PATH_SEP を明示的に指定してください。
+ */
+#define com_util_path_concat(path_out, path_size, errno_out, ...) \
+    com_util_path_concat_n((path_out), (path_size), (errno_out), COM_UTIL_PATH_CONCAT_COUNT(__VA_ARGS__), __VA_ARGS__)
+
 #ifdef __cplusplus
 extern "C"
 {
@@ -94,6 +115,26 @@ extern "C"
     COM_UTIL_EXPORT int COM_UTIL_API com_util_get_temp_dir(char   *path_out,
                                                             size_t  path_size,
                                                             int    *errno_out);
+
+    /**
+     *  @brief          パス断片を指定順にそのまま連結します。
+     *  @param[out]     path_out    連結結果の格納先。NULL を渡してはなりません。
+     *  @param[in]      path_size   @p path_out のサイズ (バイト)。0 を渡してはなりません。
+     *  @param[out]     errno_out   エラー詳細の格納先。NULL 可。
+     *  @param[in]      part_count  連結する断片数。1 以上を渡してください。
+     *  @param[in]      ...         連結する UTF-8 文字列断片。
+     *  @return         成功時は 0、失敗時は -1 を返します。
+     *
+     *  @details
+     *  断片は自動補正せず、そのまま連結されます。\n
+     *  いずれかの断片が NULL、または @p part_count が 0 の場合は EINVAL を返します。\n
+     *  結果が @p path_out に収まらない場合は ENAMETOOLONG を返します。
+     */
+    COM_UTIL_EXPORT int COM_UTIL_API com_util_path_concat_n(char   *path_out,
+                                                             size_t  path_size,
+                                                             int    *errno_out,
+                                                             size_t  part_count,
+                                                             ...);
 
 #ifdef __cplusplus
 }

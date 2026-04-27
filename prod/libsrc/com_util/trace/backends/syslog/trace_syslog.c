@@ -39,8 +39,8 @@
 #include <string.h>
 #include <pthread.h>
 
-#include <com_util/trace/trace_syslog.h>
-#include "trace_syslog_internal.h"
+#include <com_util/trace/syslog.h>
+#include "syslog_internal.h"
 #include <com_util/test/syslog_test.h>
 
 /** /dev/log への UNIX ドメインソケットパス。 */
@@ -58,7 +58,7 @@
 /**
  *  @brief  syslog プロバイダハンドル構造体 (内部定義)。
  */
-struct trace_syslog_sink
+struct com_util_syslog_sink
 {
     /** openlog に相当する識別子文字列 (複製を保持)。 */
     char *ident;
@@ -90,7 +90,7 @@ struct trace_syslog_sink
  *  @brief  バックオフ値を次段階に進める。ロック保持中に呼ぶこと。
  *******************************************************************************
  */
-static void advance_backoff(trace_syslog_sink_t *h)
+static void advance_backoff(com_util_syslog_sink_t *h)
 {
     int next = h->backoff_sec * 2;
 
@@ -102,7 +102,7 @@ static void advance_backoff(trace_syslog_sink_t *h)
  *  @brief  fd を閉じてバックオフを進める。ロック保持中に呼ぶこと。
  *******************************************************************************
  */
-static void close_and_backoff_locked(trace_syslog_sink_t *h)
+static void close_and_backoff_locked(com_util_syslog_sink_t *h)
 {
     if (h->fd >= 0)
     {
@@ -119,7 +119,7 @@ static void close_and_backoff_locked(trace_syslog_sink_t *h)
  *          ロック保持中に呼ぶこと。
  *******************************************************************************
  */
-static void try_open_socket_locked(trace_syslog_sink_t *h)
+static void try_open_socket_locked(com_util_syslog_sink_t *h)
 {
     time_t now = time(NULL);
     int fd;
@@ -142,10 +142,10 @@ static void try_open_socket_locked(trace_syslog_sink_t *h)
 }
 
 /* doxygen コメントは、ヘッダに記載 */
-COM_UTIL_EXPORT trace_syslog_sink_t *COM_UTIL_API
-    trace_syslog_sink_create(const char *ident, int facility)
+COM_UTIL_EXPORT com_util_syslog_sink_t *COM_UTIL_API
+    com_util_syslog_sink_create(const char *ident, int facility)
 {
-    trace_syslog_sink_t *handle;
+    com_util_syslog_sink_t *handle;
     size_t len;
 
     if (ident == NULL)
@@ -153,7 +153,7 @@ COM_UTIL_EXPORT trace_syslog_sink_t *COM_UTIL_API
         return NULL;
     }
 
-    handle = (trace_syslog_sink_t *)malloc(sizeof(trace_syslog_sink_t));
+    handle = (com_util_syslog_sink_t *)malloc(sizeof(com_util_syslog_sink_t));
     if (handle == NULL)
     {
         return NULL;
@@ -192,7 +192,7 @@ COM_UTIL_EXPORT trace_syslog_sink_t *COM_UTIL_API
 
 /* doxygen コメントは、ヘッダに記載 */
 COM_UTIL_EXPORT int COM_UTIL_API
-    trace_syslog_sink_write(trace_syslog_sink_t *handle, int level, const char *message)
+    com_util_syslog_sink_write(com_util_syslog_sink_t *handle, int level, const char *message)
 {
     char buf[SYSLOG_BUF_SIZE];
     struct sockaddr_un sa;
@@ -272,7 +272,7 @@ COM_UTIL_EXPORT int COM_UTIL_API
 
 /* doxygen コメントは、ヘッダに記載 */
 COM_UTIL_EXPORT void COM_UTIL_API
-    trace_syslog_sink_destroy(trace_syslog_sink_t *handle)
+    com_util_syslog_sink_destroy(com_util_syslog_sink_t *handle)
 {
     if (handle == NULL)
     {
@@ -293,7 +293,7 @@ COM_UTIL_EXPORT void COM_UTIL_API
 
 /* doxygen コメントは、ヘッダに記載 */
 COM_UTIL_EXPORT int COM_UTIL_API
-    trace_syslog_sink_rename(trace_syslog_sink_t *handle, const char *new_ident)
+    com_util_syslog_sink_rename(com_util_syslog_sink_t *handle, const char *new_ident)
 {
     char *dup;
     size_t len;
@@ -320,7 +320,7 @@ COM_UTIL_EXPORT int COM_UTIL_API
 }
 
 /* doxygen コメントは、ヘッダに記載 */
-void trace_syslog_sink_destroy_on_unload(trace_syslog_sink_t *handle)
+void com_util_syslog_sink_destroy_on_unload(com_util_syslog_sink_t *handle)
 {
     if (handle == NULL)
     {

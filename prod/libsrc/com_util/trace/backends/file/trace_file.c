@@ -17,12 +17,12 @@
 #include <com_util/crt/file.h>
 #include <com_util/crt/path.h>
 #include <com_util/crt/stdio.h>
-#include <com_util/trace/trace_file.h>
+#include <com_util/trace/log_file.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 
-#include "trace_file_internal.h"
+#include "log_file_internal.h"
 
 #if defined(PLATFORM_LINUX)
     #include <limits.h>
@@ -48,7 +48,7 @@
 /**
  *  @brief  ファイルトレースプロバイダハンドル構造体 (内部定義)。
  */
-struct trace_file_sink
+struct com_util_log_file_sink
 {
     /** ヒープ確保済みファイルパス文字列。 */
     char *path;
@@ -87,15 +87,15 @@ static char level_char(int level)
 {
     switch (level)
     {
-    case TRACE_LEVEL_CRITICAL:
+    case COM_UTIL_LOG_LEVEL_CRITICAL:
         return 'C';
-    case TRACE_LEVEL_ERROR:
+    case COM_UTIL_LOG_LEVEL_ERROR:
         return 'E';
-    case TRACE_LEVEL_WARNING:
+    case COM_UTIL_LOG_LEVEL_WARNING:
         return 'W';
-    case TRACE_LEVEL_INFO:
+    case COM_UTIL_LOG_LEVEL_INFO:
         return 'I';
-    case TRACE_LEVEL_VERBOSE:
+    case COM_UTIL_LOG_LEVEL_VERBOSE:
         return 'V';
     default:
         return 'D';
@@ -134,7 +134,7 @@ static void format_timestamp(char *buf, int buf_size)
  *  @brief  ファイルを追記モードで開き current_bytes を初期サイズで初期化する。
  *  @return 成功 0 / 失敗 -1。
  */
-static int open_file(trace_file_sink_t *p)
+static int open_file(com_util_log_file_sink_t *p)
 {
     uint32_t flags = COM_UTIL_FILE_OPEN_CREATE | COM_UTIL_FILE_OPEN_APPEND |
                      COM_UTIL_FILE_OPEN_WRITE_THROUGH | COM_UTIL_FILE_OPEN_SHARE_READ |
@@ -159,7 +159,7 @@ static int open_file(trace_file_sink_t *p)
  *          current_bytes は必ず 0 に設定される。
  *  @return 成功 0 / 失敗 -1。
  */
-static int open_file_truncate(trace_file_sink_t *p)
+static int open_file_truncate(com_util_log_file_sink_t *p)
 {
     uint32_t flags = COM_UTIL_FILE_OPEN_CREATE | COM_UTIL_FILE_OPEN_TRUNCATE |
                      COM_UTIL_FILE_OPEN_APPEND | COM_UTIL_FILE_OPEN_WRITE_THROUGH |
@@ -173,7 +173,7 @@ static int open_file_truncate(trace_file_sink_t *p)
 /**
  *  @brief  開いているファイルを閉じる。未開の場合は何もしない (冪等)。
  */
-static void close_file(trace_file_sink_t *p)
+static void close_file(com_util_log_file_sink_t *p)
 {
     com_util_file_close(&p->file);
 }
@@ -184,7 +184,7 @@ static void close_file(trace_file_sink_t *p)
  *           リネームに失敗した場合はその世代でカスケードを打ち切り、
  *           呼び出し元をブロックせずに続行する (ベストエフォート)。
  */
-static void rotate_file(trace_file_sink_t *p)
+static void rotate_file(com_util_log_file_sink_t *p)
 {
     /* パス構築用スタックバッファ */
     char old_path[PLATFORM_PATH_MAX];
@@ -228,10 +228,10 @@ static void rotate_file(trace_file_sink_t *p)
 /* ===== 公開 API ===== */
 
 /* doxygen コメントは、ヘッダに記載 */
-COM_UTIL_EXPORT trace_file_sink_t *COM_UTIL_API trace_file_sink_create(const char *path, size_t max_bytes,
+COM_UTIL_EXPORT com_util_log_file_sink_t *COM_UTIL_API com_util_log_file_sink_create(const char *path, size_t max_bytes,
                                                                            int generations)
 {
-    trace_file_sink_t *handle;
+    com_util_log_file_sink_t *handle;
     size_t path_len;
 
     if (path == NULL)
@@ -247,7 +247,7 @@ COM_UTIL_EXPORT trace_file_sink_t *COM_UTIL_API trace_file_sink_create(const cha
         return NULL;
     }
 
-    handle = (trace_file_sink_t *)malloc(sizeof(trace_file_sink_t));
+    handle = (com_util_log_file_sink_t *)malloc(sizeof(com_util_log_file_sink_t));
     if (handle == NULL)
     {
         return NULL;
@@ -262,8 +262,8 @@ COM_UTIL_EXPORT trace_file_sink_t *COM_UTIL_API trace_file_sink_create(const cha
     }
     memcpy(handle->path, path, path_len + 1);
 
-    handle->max_bytes = (max_bytes > 0) ? max_bytes : TRACE_FILE_SINK_DEFAULT_MAX_BYTES;
-    handle->generations = (generations > 0) ? generations : TRACE_FILE_SINK_DEFAULT_GENERATIONS;
+    handle->max_bytes = (max_bytes > 0) ? max_bytes : COM_UTIL_LOG_FILE_SINK_DEFAULT_MAX_BYTES;
+    handle->generations = (generations > 0) ? generations : COM_UTIL_LOG_FILE_SINK_DEFAULT_GENERATIONS;
     handle->current_bytes = 0;
     com_util_file_init(&handle->file);
 
@@ -306,7 +306,7 @@ COM_UTIL_EXPORT trace_file_sink_t *COM_UTIL_API trace_file_sink_create(const cha
 }
 
 /* doxygen コメントは、ヘッダに記載 */
-COM_UTIL_EXPORT int COM_UTIL_API trace_file_sink_write(trace_file_sink_t *handle, int level, const char *message)
+COM_UTIL_EXPORT int COM_UTIL_API com_util_log_file_sink_write(com_util_log_file_sink_t *handle, int level, const char *message)
 {
     char ts[TRACE_FILE_TS_LEN + 1];
     char buf[TRACE_FILE_LINE_BUF];
@@ -387,7 +387,7 @@ COM_UTIL_EXPORT int COM_UTIL_API trace_file_sink_write(trace_file_sink_t *handle
 }
 
 /* doxygen コメントは、ヘッダに記載 */
-COM_UTIL_EXPORT void COM_UTIL_API trace_file_sink_destroy(trace_file_sink_t *handle)
+COM_UTIL_EXPORT void COM_UTIL_API com_util_log_file_sink_destroy(com_util_log_file_sink_t *handle)
 {
     if (handle == NULL)
     {
@@ -415,7 +415,7 @@ COM_UTIL_EXPORT void COM_UTIL_API trace_file_sink_destroy(trace_file_sink_t *han
 }
 
 /* doxygen コメントは、ヘッダに記載 */
-void trace_file_sink_destroy_on_unload(trace_file_sink_t *handle)
+void com_util_log_file_sink_destroy_on_unload(com_util_log_file_sink_t *handle)
 {
     if (handle == NULL)
     {

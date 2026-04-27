@@ -3,7 +3,7 @@
 #include <testfw.h>
 #include <mock_com_util.h>
 
-WEAK_ATR int com_util_vstat_fmt(util_file_stat_t *buf, const char *format, va_list args)
+WEAK_ATR int com_util_vstat_fmt(com_util_file_stat_t *buf, const char *format, va_list args)
 {
     int rtc = -1;
 

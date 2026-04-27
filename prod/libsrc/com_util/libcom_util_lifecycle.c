@@ -18,7 +18,7 @@
 #include <com_util/base/shared_lib_lifecycle.h>
 
 #include "console/console_internal.h"
-#include "trace/trace_internal.h"
+#include "trace/logger_internal.h"
 
 /* doxygen コメントは、ヘッダに記載 */
 static void onLoad(void)
@@ -28,6 +28,6 @@ static void onLoad(void)
 /* doxygen コメントは、ヘッダに記載 */
 static void onUnload(int process_terminating)
 {
-    console_dispose_on_unload(process_terminating);
+    com_util_console_dispose_on_unload(process_terminating);
     trace_registry_dispose_all_on_unload(process_terminating);
 }

@@ -22,9 +22,9 @@
 #ifndef COM_UTIL_FILE_STAT_T_DEFINED
 #define COM_UTIL_FILE_STAT_T_DEFINED
 #if defined(PLATFORM_LINUX)
-typedef struct stat util_file_stat_t;
+typedef struct stat com_util_file_stat_t;
 #elif defined(PLATFORM_WINDOWS)
-typedef struct _stat64 util_file_stat_t;
+typedef struct _stat64 com_util_file_stat_t;
 #endif /* PLATFORM_ */
 #endif /* COM_UTIL_FILE_STAT_T_DEFINED */
 
@@ -33,12 +33,12 @@ extern "C"
 {
 #endif /* __cplusplus */
 
-    COM_UTIL_EXPORT int COM_UTIL_API com_util_stat(util_file_stat_t *buf,
+    COM_UTIL_EXPORT int COM_UTIL_API com_util_stat(com_util_file_stat_t *buf,
                                                     const char       *path);
 
     COM_UTIL_EXPORT int COM_UTIL_API com_util_mkdir(const char *path);
 
-    COM_UTIL_EXPORT int COM_UTIL_API com_util_stat_fmt(util_file_stat_t *buf,
+    COM_UTIL_EXPORT int COM_UTIL_API com_util_stat_fmt(com_util_file_stat_t *buf,
                                                         const char       *format,
                                                         ...)
 #if defined(COMPILER_GCC)
@@ -46,7 +46,7 @@ extern "C"
 #endif /* COMPILER_GCC */
         ;
 
-    COM_UTIL_EXPORT int COM_UTIL_API com_util_vstat_fmt(util_file_stat_t *buf,
+    COM_UTIL_EXPORT int COM_UTIL_API com_util_vstat_fmt(com_util_file_stat_t *buf,
                                                          const char       *format,
                                                          va_list           args)
 #if defined(COMPILER_GCC)

@@ -11,7 +11,7 @@
     #include <direct.h>
 #endif /* PLATFORM_ */
 
-COM_UTIL_EXPORT int COM_UTIL_API com_util_stat(util_file_stat_t *buf,
+COM_UTIL_EXPORT int COM_UTIL_API com_util_stat(com_util_file_stat_t *buf,
                                                 const char       *path)
 {
     if (buf == NULL || path == NULL)

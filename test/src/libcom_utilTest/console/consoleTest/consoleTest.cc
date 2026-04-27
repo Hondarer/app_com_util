@@ -11,59 +11,59 @@ class consoleTest : public Test
 
 /* ===== 共通テスト (Windows / Linux 両方) ===== */
 
-// console_init がクラッシュしないことの確認
+// com_util_console_init がクラッシュしないことの確認
 TEST_F(consoleTest, test_init_succeeds)
 {
     // Act & Assert - クラッシュしないことを確認
-    console_init(); // [手順] - コンソールヘルパーを初期化する。
+    com_util_console_init(); // [手順] - コンソールヘルパーを初期化する。
 }
 
 // init 後に dispose_on_unload(0) がクラッシュしないことの確認
 TEST_F(consoleTest, test_dispose_on_unload_after_init)
 {
     // Arrange
-    console_init();
+    com_util_console_init();
 
     // Act & Assert - クラッシュしないことを確認
-    console_dispose_on_unload(0); // [手順] - 正常に初期化した後で dispose_on_unload(0) を呼ぶ。
+    com_util_console_dispose_on_unload(0); // [手順] - 正常に初期化した後で dispose_on_unload(0) を呼ぶ。
 }
 
 // init なしで dispose_on_unload(0) を呼んでも安全なことの確認
 TEST_F(consoleTest, test_dispose_on_unload_without_init)
 {
     // Act & Assert - クラッシュしないことを確認
-    console_dispose_on_unload(0); // [手順] - init を呼ばずに dispose_on_unload(0) を呼ぶ。安全に何もしないこと。
+    com_util_console_dispose_on_unload(0); // [手順] - init を呼ばずに dispose_on_unload(0) を呼ぶ。安全に何もしないこと。
 }
 
 // dispose_on_unload(0) を 2 回呼んでも安全なことの確認
 TEST_F(consoleTest, test_double_dispose_on_unload)
 {
     // Arrange
-    console_init();
+    com_util_console_init();
 
     // Act & Assert - 2 回呼んでもクラッシュしないことを確認
-    console_dispose_on_unload(0); // [手順] - 1 回目の dispose_on_unload(0)。
-    console_dispose_on_unload(0); // [手順] - 2 回目の dispose_on_unload(0)。安全に何もしないこと。
+    com_util_console_dispose_on_unload(0); // [手順] - 1 回目の dispose_on_unload(0)。
+    com_util_console_dispose_on_unload(0); // [手順] - 2 回目の dispose_on_unload(0)。安全に何もしないこと。
 }
 
 // init 後に dispose_on_unload(1) が安全に何もしないことの確認
 TEST_F(consoleTest, test_dispose_on_unload_process_terminating)
 {
     // Arrange
-    console_init();
+    com_util_console_init();
 
     // Act & Assert - process_terminating=1 は何もしないこと (クラッシュしないことを確認)
-    console_dispose_on_unload(1); // [手順] - プロセス終了を模擬。何もしないこと。
+    com_util_console_dispose_on_unload(1); // [手順] - プロセス終了を模擬。何もしないこと。
 
     // Cleanup - init 状態を解放する (process_terminating=0 で明示的にクリーンアップ)
-    console_dispose_on_unload(0);
+    com_util_console_dispose_on_unload(0);
 }
 
 // init 後に printf / fprintf を呼んでもクラッシュしないことの確認
 TEST_F(consoleTest, test_write_after_init)
 {
     // Arrange
-    console_init();
+    com_util_console_init();
 
     // Act & Assert - クラッシュしないことを確認
     printf("consoleTest: stdout\n");           // [手順] - stdout に書き込む。
@@ -72,7 +72,7 @@ TEST_F(consoleTest, test_write_after_init)
 
 /* ===== Linux NOP テスト ===== */
 /*
- * Linux では console_init / console_dispose は no-op である。
+ * Linux では com_util_console_init / com_util_console_dispose は no-op である。
  * 以下のテストは、no-op 実装が stdout / stderr に一切影響を与えないことを確認する。
  */
 
@@ -85,7 +85,7 @@ TEST_F(consoleTest, test_nop_stdout_fd_unchanged)
     int fd_before = fileno(stdout); // [手順] - init 前の stdout FD を記録する。
 
     // Act
-    console_init();
+    com_util_console_init();
 
     // Assert
     EXPECT_EQ(fd_before, fileno(stdout)); // [確認_正常系] - no-op なので FD が変わっていないこと。
@@ -100,7 +100,7 @@ TEST_F(consoleTest, test_nop_stderr_fd_unchanged)
     int fd_before = fileno(stderr); // [手順] - init 前の stderr FD を記録する。
 
     // Act
-    console_init();
+    com_util_console_init();
 
     // Assert
     EXPECT_EQ(fd_before, fileno(stderr)); // [確認_正常系] - no-op なので FD が変わっていないこと。
@@ -113,10 +113,10 @@ TEST_F(consoleTest, test_nop_dispose_stdout_fd_unchanged)
 {
     // Arrange
     int fd_before = fileno(stdout); // [手順] - init 前の stdout FD を記録する。
-    console_init();
+    com_util_console_init();
 
     // Act
-    console_dispose(); // [手順] - no-op の dispose を呼ぶ。
+    com_util_console_dispose(); // [手順] - no-op の dispose を呼ぶ。
 
     // Assert
     EXPECT_EQ(fd_before, fileno(stdout)); // [確認_正常系] - dispose を呼んでも FD が変わらないこと。

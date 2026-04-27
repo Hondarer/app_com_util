@@ -1,5 +1,5 @@
-#ifndef CONSOLE_H
-#define CONSOLE_H
+#ifndef COM_UTIL_CONSOLE_H
+#define COM_UTIL_CONSOLE_H
 
 #include <com_util/base/platform.h>
 #include <com_util_export.h>
@@ -10,7 +10,7 @@
  *  @details        Windows 環境で stdout / stderr を内部パイプに差し替え、
  *                  コンソール (TTY) 出力は @c WriteConsoleW 経由で UTF-16 として
  *                  送出し、パイプやファイルへは UTF-8 バイト列をそのまま書き戻します。\n
- *                  Linux 環境では @c console_init は何もせず 0 を返します。\n
+ *                  Linux 環境では @c com_util_console_init は何もせず 0 を返します。\n
  *                  呼び出し側は @c \#ifdef @c _WIN32 ガード不要でクロスプラットフォームに
  *                  使用できます。
  *
@@ -20,10 +20,10 @@
     #include <stdio.h>
 
     int main(void) {
-        console_init();              // stdout / stderr を差し替え
+        com_util_console_init();     // stdout / stderr を差し替え
         printf("こんにちは\n");       // コンソールでは WriteConsoleW、パイプでは UTF-8
         fprintf(stderr, "警告\n");
-        console_dispose();
+        com_util_console_dispose();
         return 0;
     }
  *  @endcode
@@ -49,21 +49,21 @@ extern "C"
      *                  初期化に失敗した場合は stderr に警告を出力し、何もせずに返ります。
      *
      *  @note           リソースはライブラリアンロード時に自動解放されます。
-     *                  明示的に解放する場合は @c console_dispose を呼び出してください。
+     *                  明示的に解放する場合は @c com_util_console_dispose を呼び出してください。
      */
-    COM_UTIL_EXPORT void COM_UTIL_API console_init(void);
+    COM_UTIL_EXPORT void COM_UTIL_API com_util_console_init(void);
 
     /**
      *  @brief          コンソールヘルパーを終了し、リソースを解放する。
      *  @details        Windows 環境ではバックグラウンドスレッドを停止し、
      *                  stdout / stderr を元のハンドルに戻します。\n
      *                  Linux 環境では何もしません。\n
-     *                  @c console_init を呼び出していない場合も安全に呼び出せます。
+     *                  @c com_util_console_init を呼び出していない場合も安全に呼び出せます。
      */
-    COM_UTIL_EXPORT void COM_UTIL_API console_dispose(void);
+    COM_UTIL_EXPORT void COM_UTIL_API com_util_console_dispose(void);
 
 #ifdef __cplusplus
 }
 #endif /* __cplusplus */
 
-#endif /* CONSOLE_H */
+#endif /* COM_UTIL_CONSOLE_H */

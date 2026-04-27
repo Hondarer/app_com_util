@@ -1,7 +1,7 @@
 #include <testfw.h>
 #include <mock_com_util.h>
 
-WEAK_ATR int com_util_stat(util_file_stat_t *buf, const char *path)
+WEAK_ATR int com_util_stat(com_util_file_stat_t *buf, const char *path)
 {
     int rtc = -1;
 

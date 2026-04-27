@@ -1,0 +1,74 @@
+#ifndef COM_UTIL_SYSLOG_H
+#define COM_UTIL_SYSLOG_H
+
+#include <com_util/base/platform.h>
+#include <com_util_export.h>
+
+/**
+ *  @file           syslog.h
+ *  @brief          syslog ヘルパーライブラリ。
+ *  @details        Linux syslog (RFC5424 系実装) のラッパー関数群を提供します。\n
+ *                  Linux 専用ライブラリです。呼び出し元は @c \#if defined(PLATFORM_LINUX) の
+ *                  中でのみ使用してください。
+ */
+
+#if defined(PLATFORM_LINUX)
+
+/* ===== 不透明ハンドル型 ===== */
+
+/** syslog プロバイダハンドル (不透明型)。 */
+typedef struct com_util_syslog_sink com_util_syslog_sink_t;
+
+/* ===== API 関数 ===== */
+
+#ifdef __cplusplus
+extern "C"
+{
+#endif /* __cplusplus */
+
+    /**
+     *  @brief          syslog プロバイダを初期化する。
+     *
+     *  @param[in]      ident     syslog メッセージに付与される識別子文字列。
+     *  @param[in]      facility  syslog facility 値 (例: LOG_USER, LOG_LOCAL0〜LOG_LOCAL7)。
+     *  @return         成功時: ハンドル。失敗時: NULL。
+     */
+    COM_UTIL_EXPORT com_util_syslog_sink_t *COM_UTIL_API
+        com_util_syslog_sink_create(const char *ident, int facility);
+
+    /**
+     *  @brief          syslog へ UTF-8 メッセージを書き込む。
+     *
+     *  @param[in]      handle   com_util_syslog_sink_create の戻り値。NULL は無視。
+     *  @param[in]      level    syslog severity 値。
+     *  @param[in]      message  null 終端 UTF-8 文字列。NULL は無視。
+     *  @return         成功 0 / 失敗 -1。
+     */
+    COM_UTIL_EXPORT int COM_UTIL_API
+        com_util_syslog_sink_write(com_util_syslog_sink_t *handle, int level, const char *message);
+
+    /**
+     *  @brief          syslog プロバイダの識別子を変更する。
+     *
+     *  @param[in]      handle     com_util_syslog_sink_create の戻り値。NULL は -1 を返す。
+     *  @param[in]      new_ident  新しい識別子文字列。NULL は -1 を返す。
+     *  @return         成功 0 / 失敗 -1。
+     */
+    COM_UTIL_EXPORT int COM_UTIL_API
+        com_util_syslog_sink_rename(com_util_syslog_sink_t *handle, const char *new_ident);
+
+    /**
+     *  @brief          syslog プロバイダを終了する。
+     *
+     *  @param[in]      handle   com_util_syslog_sink_create の戻り値。NULL は無視。
+     */
+    COM_UTIL_EXPORT void COM_UTIL_API
+        com_util_syslog_sink_destroy(com_util_syslog_sink_t *handle);
+
+#ifdef __cplusplus
+}
+#endif /* __cplusplus */
+
+#endif /* PLATFORM_LINUX */
+
+#endif /* COM_UTIL_SYSLOG_H */

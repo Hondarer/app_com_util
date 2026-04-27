@@ -4,7 +4,7 @@
  *  @details        Windows 環境: stdout / stderr を匿名パイプに差し替え、
  *                  読み取りスレッドがコンソール (TTY) には WriteConsoleW で UTF-16 として
  *                  出力し、パイプやファイルへは UTF-8 バイト列をそのまま転送します。\n
- *                  Linux 環境: console_init / console_dispose は no-op です。
+ *                  Linux 環境: com_util_console_init / com_util_console_dispose は no-op です。
  */
 
 #include <com_util/console/console.h>
@@ -291,14 +291,14 @@ static void dispose_stream_on_unload(stream_state_t *s, FILE *crt_stream)
 
 /* ===== 公開 API ===== */
 
-COM_UTIL_EXPORT void COM_UTIL_API console_init(void)
+COM_UTIL_EXPORT void COM_UTIL_API com_util_console_init(void)
 {
     /* 二重初期化を防ぐ (マルチスレッド安全ではないが init はシングルスレッドで呼ぶ想定) */
     if (s_stdout_state.active) return;
 
     /* stdout がコンソール (TTY) でなければ内部パイプへの差し替えは不要。
      * パイプ/ファイル出力時は UTF-8 バイト列をそのまま転送できる。
-     * 差し替えを行うと console_dispose() を呼ばずに return した場合に
+     * 差し替えを行うと com_util_console_dispose() を呼ばずに return した場合に
      * リーダースレッドが ExitProcess() で強制終了されデータが失われる。 */
     {
         HANDLE h    = GetStdHandle(STD_OUTPUT_HANDLE);
@@ -309,26 +309,26 @@ COM_UTIL_EXPORT void COM_UTIL_API console_init(void)
 
     if (init_stream(&s_stdout_state, STD_OUTPUT_HANDLE, stdout) != 0)
     {
-        fprintf(stderr, "console_init: stdout の初期化に失敗しました。\n");
+        fprintf(stderr, "com_util_console_init: stdout の初期化に失敗しました。\n");
         return;
     }
 
     if (init_stream(&s_stderr_state, STD_ERROR_HANDLE, stderr) != 0) {
         /* stderr の初期化に失敗した場合は stdout の差し替えをロールバックする */
         dispose_stream(&s_stdout_state, stdout);
-        fprintf(stderr, "console_init: stderr の初期化に失敗しました。\n");
+        fprintf(stderr, "com_util_console_init: stderr の初期化に失敗しました。\n");
         return;
     }
 }
 
-COM_UTIL_EXPORT void COM_UTIL_API console_dispose(void)
+COM_UTIL_EXPORT void COM_UTIL_API com_util_console_dispose(void)
 {
     /* stderr → stdout の順で解放する */
     dispose_stream(&s_stderr_state, stderr);
     dispose_stream(&s_stdout_state, stdout);
 }
 
-void console_dispose_on_unload(int process_terminating)
+void com_util_console_dispose_on_unload(int process_terminating)
 {
     /* プロセス終了時は OS がスレッドを自動終了・リソースを回収する。
      * ローダーロック保持中のスレッド待機はデッドロックになりうるため何もしない。 */
@@ -342,8 +342,8 @@ void console_dispose_on_unload(int process_terminating)
 
 /* ===== Linux 実装 (no-op) ===== */
 
-COM_UTIL_EXPORT void COM_UTIL_API console_init(void)    {}
-COM_UTIL_EXPORT void COM_UTIL_API console_dispose(void) {}
-void console_dispose_on_unload(int process_terminating) { (void)process_terminating; }
+COM_UTIL_EXPORT void COM_UTIL_API com_util_console_init(void)    {}
+COM_UTIL_EXPORT void COM_UTIL_API com_util_console_dispose(void) {}
+void com_util_console_dispose_on_unload(int process_terminating) { (void)process_terminating; }
 
 #endif /* PLATFORM_ */

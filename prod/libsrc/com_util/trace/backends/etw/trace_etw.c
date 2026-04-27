@@ -20,25 +20,25 @@
 #include <com_util/base/windows_sdk.h>
 #include <TraceLoggingProvider.h>
 #pragma comment(lib, "Advapi32.lib")
-#include <com_util/trace/trace_etw.h>
+#include <com_util/trace/etw.h>
 #include <stdlib.h>
 
-#include "trace_etw_internal.h"
+#include "etw_internal.h"
 
 /**
  *  @brief  ETW プロバイダハンドル構造体 (内部定義)。
  */
-struct trace_etw_provider
+struct com_util_etw_provider
 {
     /** TraceLogging プロバイダ参照。 */
-    trace_etw_provider_ref_t provider_ref;
+    com_util_etw_provider_ref_t provider_ref;
 };
 
 /* doxygen コメントは、ヘッダに記載 */
-COM_UTIL_EXPORT trace_etw_provider_t *COM_UTIL_API
-    trace_etw_provider_create(trace_etw_provider_ref_t provider_ref)
+COM_UTIL_EXPORT com_util_etw_provider_t *COM_UTIL_API
+    com_util_etw_provider_create(com_util_etw_provider_ref_t provider_ref)
 {
-    trace_etw_provider_t *handle;
+    com_util_etw_provider_t *handle;
     TLG_STATUS status;
 
     if (provider_ref == NULL)
@@ -46,7 +46,7 @@ COM_UTIL_EXPORT trace_etw_provider_t *COM_UTIL_API
         return NULL;
     }
 
-    handle = (trace_etw_provider_t *)malloc(sizeof(trace_etw_provider_t));
+    handle = (com_util_etw_provider_t *)malloc(sizeof(com_util_etw_provider_t));
     if (handle == NULL)
     {
         return NULL;
@@ -74,7 +74,7 @@ COM_UTIL_EXPORT trace_etw_provider_t *COM_UTIL_API
  *  @param[in]      message メッセージ文字列。
  *******************************************************************************
  */
-static void write_trace_event(trace_etw_provider_ref_t ref, int level,
+static void write_trace_event(com_util_etw_provider_ref_t ref, int level,
                                const char *service, const char *message)
 {
     if (service != NULL)
@@ -148,7 +148,7 @@ static void write_trace_event(trace_etw_provider_ref_t ref, int level,
 
 /* doxygen コメントは、ヘッダに記載 */
 COM_UTIL_EXPORT int COM_UTIL_API
-    trace_etw_provider_write(trace_etw_provider_t *handle, int level,
+    com_util_etw_provider_write(com_util_etw_provider_t *handle, int level,
                        const char *service, const char *message)
 {
     if (handle == NULL || message == NULL)
@@ -163,7 +163,7 @@ COM_UTIL_EXPORT int COM_UTIL_API
 
 /* doxygen コメントは、ヘッダに記載 */
 COM_UTIL_EXPORT void COM_UTIL_API
-    trace_etw_provider_destroy(trace_etw_provider_t *handle)
+    com_util_etw_provider_destroy(com_util_etw_provider_t *handle)
 {
     if (handle == NULL)
     {
@@ -175,7 +175,7 @@ COM_UTIL_EXPORT void COM_UTIL_API
 }
 
 /* doxygen コメントは、ヘッダに記載 */
-void trace_etw_provider_destroy_on_unload(trace_etw_provider_t *handle, int process_terminating)
+void com_util_etw_provider_destroy_on_unload(com_util_etw_provider_t *handle, int process_terminating)
 {
     if (handle == NULL)
     {

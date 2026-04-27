@@ -38,7 +38,7 @@ extern "C"
  *  デッドロックは発生しません。
  *******************************************************************************
  */
-void console_dispose_on_unload(int process_terminating);
+void com_util_console_dispose_on_unload(int process_terminating);
 
 #ifdef __cplusplus
 }

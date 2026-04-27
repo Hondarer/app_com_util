@@ -3,7 +3,7 @@
 
 #include "path_format_internal.h"
 
-COM_UTIL_EXPORT int COM_UTIL_API com_util_vstat_fmt(util_file_stat_t *buf,
+COM_UTIL_EXPORT int COM_UTIL_API com_util_vstat_fmt(com_util_file_stat_t *buf,
                                                      const char       *format,
                                                      va_list           args)
 {
@@ -22,7 +22,7 @@ COM_UTIL_EXPORT int COM_UTIL_API com_util_vstat_fmt(util_file_stat_t *buf,
     return com_util_stat(buf, filename);
 }
 
-COM_UTIL_EXPORT int COM_UTIL_API com_util_stat_fmt(util_file_stat_t *buf,
+COM_UTIL_EXPORT int COM_UTIL_API com_util_stat_fmt(com_util_file_stat_t *buf,
                                                     const char       *format,
                                                     ...)
 {
