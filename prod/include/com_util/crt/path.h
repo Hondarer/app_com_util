@@ -29,6 +29,7 @@
 
 #include <com_util/base/platform.h>
 #include <com_util_export.h>
+#include <stddef.h>
 
 #ifdef DOXYGEN
     /**
@@ -74,6 +75,25 @@ extern "C"
      *  正規化済みのため、本関数を呼び出す必要はありません。
      */
     COM_UTIL_EXPORT char *COM_UTIL_API com_util_normalize_path_sep(char *path);
+
+    /**
+     *  @brief          プラットフォームの一時ディレクトリのパスを取得します。
+     *  @param[out]     path_out    一時ディレクトリの絶対パス (UTF-8) の格納先。
+     *                              末尾パス区切り文字 (@ref PLATFORM_PATH_SEP_CHR) は付きません。
+     *                              NULL を渡してはなりません。
+     *  @param[in]      path_size   @p path_out のサイズ (バイト)。0 を渡してはなりません。
+     *  @param[out]     errno_out   エラー詳細の格納先。NULL 可。成功時は変更しません。
+     *  @return         成功時は 0、失敗時は -1 を返します。
+     *
+     *  @details
+     *  Linux 環境では環境変数 @c TMPDIR を参照し、未設定または空の場合は @c "/tmp" を使用します。\n
+     *  Windows 環境では @c GetTempPathW() で取得したパスを UTF-8 に変換して使用します。\n
+     *  出力パスは常に @ref PLATFORM_PATH_SEP (`"/"`) 区切りで正規化されており、末尾の区切り文字は含まれません。\n
+     *  ファイルパスを構築する際は @ref PLATFORM_PATH_SEP を挟んでください。
+     */
+    COM_UTIL_EXPORT int COM_UTIL_API com_util_get_temp_dir(char   *path_out,
+                                                            size_t  path_size,
+                                                            int    *errno_out);
 
 #ifdef __cplusplus
 }
