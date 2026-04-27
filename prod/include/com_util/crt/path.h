@@ -5,8 +5,19 @@
  *  @author         Tetsuo Honda
  *  @date           2026/04/22
  *
- *  プラットフォームに依存せず、OS のパス最大長を表す定数 @ref PLATFORM_PATH_MAX
- *  を提供します。
+ *  @details
+ *  プラットフォームに依存せず使用できるパス関連の定数と API を提供します。
+ *
+ *  **パスセパレータ方針**\n
+ *  本ライブラリはパスセパレータを全プラットフォームで @ref PLATFORM_PATH_SEP (`"/"`) に統一します。
+ *
+ *  - **入力パス** (呼び出し元が渡す): `"/"` をそのまま渡してください。
+ *    Windows の CRT/Win32 API は wchar_t パス内の `'/'` を受け付けるため変換不要です。
+ *  - **出力パス** (`path_out` など): Windows API が返す `'\'` は内部で `'/'` に正規化して
+ *    呼び出し元に返します。常に `'/'` 区切りのパスを受け取れます。
+ *  - **パス構築**: ライブラリ内部でセパレータが必要な場合は @ref PLATFORM_PATH_SEP を使用します。
+ *  - **外部由来パス**: 環境変数や設定ファイルから取得したパスは
+ *    com_util_normalize_path_sep() で正規化できます。
  *
  *  @copyright      Copyright (C) Tetsuo Honda. 2026. All rights reserved.
  *
@@ -17,6 +28,7 @@
 #define COM_UTIL_CRT_PATH_H
 
 #include <com_util/base/platform.h>
+#include <com_util_export.h>
 
 #ifdef DOXYGEN
     /**
@@ -33,5 +45,38 @@
         #define PLATFORM_PATH_MAX MAX_PATH
     #endif /* PLATFORM_ */
 #endif     /* DOXYGEN */
+
+/**
+ *  @def            PLATFORM_PATH_SEP
+ *  @brief          ファイルパス区切り文字列。全プラットフォームで `"/"` に統一します。
+ */
+#define PLATFORM_PATH_SEP "/"
+/**
+ *  @def            PLATFORM_PATH_SEP_CHR
+ *  @brief          ファイルパス区切り文字 (char 型)。全プラットフォームで `'/'` に統一します。
+ */
+#define PLATFORM_PATH_SEP_CHR '/'
+
+#ifdef __cplusplus
+extern "C"
+{
+#endif /* __cplusplus */
+
+    /**
+     *  @brief          パス文字列内の '\\' を '/' に正規化します (インプレース)。
+     *  @param[in,out]  path  正規化対象のパス文字列 (UTF-8)。NULL を渡してはなりません。
+     *  @return         path を返します (連鎖呼び出し用)。
+     *
+     *  @details
+     *  環境変数や設定ファイルから読み取ったパスに Windows スタイルの '\\' が含まれる場合に
+     *  使用します。\n
+     *  本ライブラリが出力するパス (@p path_out 等) はすでに @ref PLATFORM_PATH_SEP (`"/"`) に
+     *  正規化済みのため、本関数を呼び出す必要はありません。
+     */
+    COM_UTIL_EXPORT char *COM_UTIL_API com_util_normalize_path_sep(char *path);
+
+#ifdef __cplusplus
+}
+#endif /* __cplusplus */
 
 #endif /* COM_UTIL_CRT_PATH_H */

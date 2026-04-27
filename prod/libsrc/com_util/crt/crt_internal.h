@@ -30,7 +30,21 @@ static int com_util_wpath_to_utf8(char *out, size_t out_size, const wchar_t *wpa
     }
 
     n = WideCharToMultiByte(CP_UTF8, 0, wpath, -1, out, (int)out_size, NULL, NULL);
-    return (n <= 0) ? -1 : n;
+    if (n <= 0)
+    {
+        return -1;
+    }
+
+    /* Windows API が返す '\\' を '/' に正規化する */
+    for (char *p = out; *p != '\0'; ++p)
+    {
+        if (*p == '\\')
+        {
+            *p = '/';
+        }
+    }
+
+    return n;
 }
 #endif /* PLATFORM_WINDOWS */
 

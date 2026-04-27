@@ -100,6 +100,7 @@ static const char *get_ilename_part(const char *path)
         return "";
     for (p = path; *p; ++p)
     {
+        /* コンパイル時 __FILE__ (MSVC は '\\') や外部由来パスを扱う汎用関数のため両セパレータに対応する */
         if (*p == '/' || *p == '\\')
             last = p + 1;
     }
@@ -202,7 +203,7 @@ static get_lib_info_status_t get_self_path_posix(char *out_path, size_t out_path
     }
 
     /* すでに絶対パスならそのまま返す (正規化はできない) */
-    if (p[0] == '/')
+    if (p[0] == PLATFORM_PATH_SEP_CHR)
     {
         return copy_str(out_path, out_path_sz, p);
     }
@@ -214,7 +215,7 @@ static get_lib_info_status_t get_self_path_posix(char *out_path, size_t out_path
 
         if (getcwd(cwd, sizeof(cwd)) == NULL)
             return MYLIB_EFAIL;
-        if (snprintf(joined, sizeof(joined), "%s/%s", cwd, p) <= 0)
+        if (snprintf(joined, sizeof(joined), "%s" PLATFORM_PATH_SEP "%s", cwd, p) <= 0)
             return MYLIB_EFAIL;
 
         if (realpath(joined, resolved) != NULL)

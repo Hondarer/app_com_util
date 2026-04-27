@@ -65,6 +65,7 @@
 /* strrchr (_TRACE_LOGGER_BASENAME マクロで使用) */
 #include <string.h>
 #include <com_util/base/platform.h>
+#include <com_util/crt/path.h>
 #include <com_util_export.h>
 
 /* 内部で使用するプラットフォーム固有ヘッダー */
@@ -678,11 +679,12 @@ extern "C"
 /**
  *  @def            _TRACE_LOGGER_BASENAME(f)
  *  @brief          ファイルパスからベースネームを取り出す内部ヘルパーマクロ。
- *                  Windows (\\) と Linux (/) の両パス区切り文字に対応します。
+ *                  PLATFORM_PATH_SEP_CHR (`'/'`) を優先し、MSVC の __FILE__ が
+ *                  返す `'\\'` をフォールバックとして保持します。
  *  @internal
  */
 #define _TRACE_LOGGER_BASENAME(f) \
-    (strrchr((f), '/') ? strrchr((f), '/') + 1 : \
+    (strrchr((f), PLATFORM_PATH_SEP_CHR) ? strrchr((f), PLATFORM_PATH_SEP_CHR) + 1 : \
      (strrchr((f), '\\') ? strrchr((f), '\\') + 1 : (f)))
 
 /**

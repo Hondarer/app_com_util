@@ -351,7 +351,7 @@ static const char *get_process_basename(char *buf, size_t buf_size)
     }
     buf[len] = '\0';
 
-    slash = strrchr(buf, '/');
+    slash = strrchr(buf, PLATFORM_PATH_SEP_CHR);
     return slash ? slash + 1 : buf;
 }
 
@@ -376,6 +376,8 @@ static const char *get_process_basename(char *buf, size_t buf_size)
         return FALLBACK_NAME;
     }
 
+    /* GetModuleFileNameA() は ANSI パスを '\\' で返す。com_util_wpath_to_utf8() 非経由のため
+     * '\\' チェックを先に行い、'/' はフォールバックとして残す。 */
     sep = strrchr(buf, '\\');
     if (sep == NULL)
     {

@@ -8,7 +8,9 @@
  *  @details
  *  C 標準ファイル I/O 関数をプラットフォーム差異なしで使用できるラッパーを提供します。\n
  *  ファイルパスを受け取る関数は UTF-8 文字列として扱い、Windows では内部で
- *  Unicode (_W 系関数) に変換します。
+ *  Unicode (_W 系関数) に変換します。\n
+ *  出力パス (@p path_out 等) はプラットフォームによらず @ref PLATFORM_PATH_SEP (`"/"`) に
+ *  統一されます。パスセパレータの詳細な方針は @ref path.h を参照してください。
  *
  *  @copyright      Copyright (C) Tetsuo Honda. 2026. All rights reserved.
  *
