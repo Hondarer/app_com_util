@@ -1,4 +1,5 @@
 # BEGIN makefw-subdirs
 SUBDIRS := \
-	libsrc
+	libsrc \
+	src
 # END makefw-subdirs
