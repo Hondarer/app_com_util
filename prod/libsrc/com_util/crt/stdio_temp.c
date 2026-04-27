@@ -15,17 +15,16 @@
     #include <wchar.h>
 #endif /* PLATFORM_ */
 
-#if defined(PLATFORM_WINDOWS)
-    /* Windows GetTempFileNameW の prefix は最大 3 文字 */
-    #define COM_UTIL_TEMP_PREFIX_MAX 3u
-#endif /* PLATFORM_WINDOWS */
+/* prefix の有効文字数上限 (Windows GetTempFileNameW の制約に準拠) */
+#define COM_UTIL_TEMP_PREFIX_MAX 3u
 
 COM_UTIL_EXPORT FILE *COM_UTIL_API com_util_fopen_temp(const char *prefix,
+                                                        const char *modes,
                                                         char       *path_out,
                                                         size_t      path_size,
                                                         int        *errno_out)
 {
-    if (path_out == NULL || path_size == 0u)
+    if (modes == NULL || path_out == NULL || path_size == 0u)
     {
         if (errno_out != NULL)
         {
@@ -36,11 +35,30 @@ COM_UTIL_EXPORT FILE *COM_UTIL_API com_util_fopen_temp(const char *prefix,
 
 #if defined(PLATFORM_LINUX)
     {
-        const char *tmpdir = getenv("TMPDIR");
-        const char *pfx    = (prefix != NULL) ? prefix : "com_util_";
+        const char *tmpdir   = getenv("TMPDIR");
+        char        pfx_buf[COM_UTIL_TEMP_PREFIX_MAX + 1u];
+        const char *pfx;
         int         fd;
         FILE       *fp;
         int         n;
+
+        if (prefix != NULL)
+        {
+            if (strlen(prefix) > COM_UTIL_TEMP_PREFIX_MAX)
+            {
+                memcpy(pfx_buf, prefix, COM_UTIL_TEMP_PREFIX_MAX);
+                pfx_buf[COM_UTIL_TEMP_PREFIX_MAX] = '\0';
+                pfx = pfx_buf;
+            }
+            else
+            {
+                pfx = prefix;
+            }
+        }
+        else
+        {
+            pfx = "cu_";
+        }
 
         if (tmpdir == NULL || tmpdir[0] == '\0')
         {
@@ -68,7 +86,7 @@ COM_UTIL_EXPORT FILE *COM_UTIL_API com_util_fopen_temp(const char *prefix,
             return NULL;
         }
 
-        fp = fdopen(fd, "wb");
+        fp = fdopen(fd, modes);
         if (fp == NULL)
         {
             int saved = errno;
@@ -87,20 +105,12 @@ COM_UTIL_EXPORT FILE *COM_UTIL_API com_util_fopen_temp(const char *prefix,
         wchar_t wdir[MAX_PATH];
         wchar_t wfile[MAX_PATH];
         wchar_t wprefix[COM_UTIL_TEMP_PREFIX_MAX + 1u];
+        wchar_t wmodes[64];
         FILE   *fp = NULL;
         errno_t err;
         size_t  converted;
         DWORD   dwret;
         UINT    uret;
-
-        if (prefix != NULL && strlen(prefix) > COM_UTIL_TEMP_PREFIX_MAX)
-        {
-            if (errno_out != NULL)
-            {
-                *errno_out = EINVAL;
-            }
-            return NULL;
-        }
 
         dwret = GetTempPathW((DWORD)(sizeof(wdir) / sizeof(wdir[0])), wdir);
         if (dwret == 0u || dwret > (DWORD)(sizeof(wdir) / sizeof(wdir[0])))
@@ -145,7 +155,18 @@ COM_UTIL_EXPORT FILE *COM_UTIL_API com_util_fopen_temp(const char *prefix,
             return NULL;
         }
 
-        err = _wfopen_s(&fp, wfile, L"wb");
+        err = mbstowcs_s(&converted, wmodes, sizeof(wmodes) / sizeof(wmodes[0]), modes, _TRUNCATE);
+        if (err != 0)
+        {
+            DeleteFileW(wfile);
+            if (errno_out != NULL)
+            {
+                *errno_out = EINVAL;
+            }
+            return NULL;
+        }
+
+        err = _wfopen_s(&fp, wfile, wmodes);
         if (err != 0)
         {
             DeleteFileW(wfile);

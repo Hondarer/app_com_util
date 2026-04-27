@@ -71,7 +71,7 @@ Mock_com_util::Mock_com_util()
         .WillByDefault(Return(-1));
     ON_CALL(*this, com_util_vremove_fmt(_))
         .WillByDefault(Return(-1));
-    ON_CALL(*this, com_util_fopen_temp(_, _, _, _))
+    ON_CALL(*this, com_util_fopen_temp(_, _, _, _, _))
         .WillByDefault(Return(nullptr));
     ON_CALL(*this, com_util_access_fmt(_, _))
         .WillByDefault(Return(-1));

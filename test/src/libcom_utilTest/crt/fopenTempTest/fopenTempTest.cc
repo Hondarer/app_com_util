@@ -36,7 +36,7 @@ protected:
 TEST_F(fopenTempTest, opens_writable_file_and_reports_path)
 {
     char  path[PLATFORM_PATH_MAX] = {};
-    FILE *fp = com_util_fopen_temp("ptr", path, sizeof(path), nullptr);
+    FILE *fp = com_util_fopen_temp("ptr", "wb", path, sizeof(path), nullptr);
 
     ASSERT_NE((FILE *)nullptr, fp);  // [確認_正常系] - FILE* が返ること。
     EXPECT_NE('\0', path[0]);        // [確認_正常系] - path_out が空文字列でないこと。
@@ -55,7 +55,7 @@ TEST_F(fopenTempTest, returns_unique_paths_for_repeated_calls)
     for (int i = 0; i < 4; ++i)
     {
         char  path[PLATFORM_PATH_MAX] = {};
-        FILE *fp = com_util_fopen_temp("ptr", path, sizeof(path), nullptr);
+        FILE *fp = com_util_fopen_temp("ptr", "wb", path, sizeof(path), nullptr);
         ASSERT_NE((FILE *)nullptr, fp);
         fclose(fp);
         EXPECT_TRUE(seen.insert(path).second);  // [確認_正常系] - 過去に返された path と重複しないこと。
@@ -66,7 +66,7 @@ TEST_F(fopenTempTest, returns_unique_paths_for_repeated_calls)
 TEST_F(fopenTempTest, prefix_is_part_of_basename)
 {
     char  path[PLATFORM_PATH_MAX] = {};
-    FILE *fp = com_util_fopen_temp("abc", path, sizeof(path), nullptr);
+    FILE *fp = com_util_fopen_temp("abc", "wb", path, sizeof(path), nullptr);
     ASSERT_NE((FILE *)nullptr, fp);
     fclose(fp);
 
@@ -78,16 +78,25 @@ TEST_F(fopenTempTest, prefix_is_part_of_basename)
 TEST_F(fopenTempTest, null_prefix_is_accepted)
 {
     char  path[PLATFORM_PATH_MAX] = {};
-    FILE *fp = com_util_fopen_temp(nullptr, path, sizeof(path), nullptr);
+    FILE *fp = com_util_fopen_temp(nullptr, "wb", path, sizeof(path), nullptr);
     ASSERT_NE((FILE *)nullptr, fp);  // [確認_正常系] - prefix=NULL でも FILE* が返ること。
     fclose(fp);
     std::remove(path);
 }
 
+TEST_F(fopenTempTest, null_modes_returns_einval)
+{
+    char path[PLATFORM_PATH_MAX] = {};
+    int  err                      = 0;
+    FILE *fp = com_util_fopen_temp("ptr", nullptr, path, sizeof(path), &err);
+    EXPECT_EQ((FILE *)nullptr, fp);  // [確認_異常系] - NULL modes で NULL が返ること。
+    EXPECT_EQ(EINVAL, err);          // [確認_異常系] - errno_out に EINVAL が格納されること。
+}
+
 TEST_F(fopenTempTest, null_path_out_returns_einval)
 {
     int err = 0;
-    FILE *fp = com_util_fopen_temp("ptr", nullptr, 0u, &err);
+    FILE *fp = com_util_fopen_temp("ptr", "wb", nullptr, 0u, &err);
     EXPECT_EQ((FILE *)nullptr, fp);  // [確認_異常系] - NULL path_out で NULL が返ること。
     EXPECT_EQ(EINVAL, err);          // [確認_異常系] - errno_out に EINVAL が格納されること。
 }
@@ -96,7 +105,7 @@ TEST_F(fopenTempTest, zero_path_size_returns_einval)
 {
     char path[1] = { 'x' };
     int  err     = 0;
-    FILE *fp = com_util_fopen_temp("ptr", path, 0u, &err);
+    FILE *fp = com_util_fopen_temp("ptr", "wb", path, 0u, &err);
     EXPECT_EQ((FILE *)nullptr, fp);  // [確認_異常系] - path_size=0 で NULL が返ること。
     EXPECT_EQ(EINVAL, err);          // [確認_異常系] - errno_out に EINVAL が格納されること。
 }
@@ -107,19 +116,19 @@ TEST_F(fopenTempTest, path_size_too_small_returns_enametoolong)
     /* "<dir>/<prefix>XXXXXX" + NUL に満たない長さ */
     char path[4] = {};
     int  err     = 0;
-    FILE *fp = com_util_fopen_temp("ptr", path, sizeof(path), &err);
+    FILE *fp = com_util_fopen_temp("ptr", "wb", path, sizeof(path), &err);
     EXPECT_EQ((FILE *)nullptr, fp);   // [確認_異常系] - path_size が必要長未満で NULL が返ること。
     EXPECT_EQ(ENAMETOOLONG, err);     // [確認_異常系] - errno_out に ENAMETOOLONG が格納されること。
 }
 #endif /* PLATFORM_LINUX */
 
-#if defined(PLATFORM_WINDOWS)
-TEST_F(fopenTempTest, prefix_longer_than_three_chars_returns_einval)
+TEST_F(fopenTempTest, prefix_longer_than_three_chars_is_truncated)
 {
-    char path[PLATFORM_PATH_MAX] = {};
-    int  err                      = 0;
-    FILE *fp = com_util_fopen_temp("abcd", path, sizeof(path), &err);
-    EXPECT_EQ((FILE *)nullptr, fp);  // [確認_異常系] - 4 文字以上の prefix で NULL が返ること。
-    EXPECT_EQ(EINVAL, err);          // [確認_異常系] - errno_out に EINVAL が格納されること。
+    char  path[PLATFORM_PATH_MAX] = {};
+    FILE *fp = com_util_fopen_temp("abcd", "wb", path, sizeof(path), nullptr);
+    ASSERT_NE((FILE *)nullptr, fp);  // [確認_正常系] - 4 文字以上の prefix でも FILE* が返ること。
+    fclose(fp);
+    std::string base = basename_of(path);
+    EXPECT_NE(std::string::npos, base.find("abc"));  // [確認_正常系] - 先頭 3 文字が basename に含まれること。
+    std::remove(path);
 }
-#endif /* PLATFORM_WINDOWS */

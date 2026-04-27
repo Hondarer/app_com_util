@@ -97,10 +97,13 @@ extern "C"
         ;
 
     /**
-     *  @brief          一意な一時ファイルを atomic に作成し、書き込み用にバイナリモードで開きます。
+     *  @brief          一意な一時ファイルを atomic に作成し、指定されたモードで開きます。
      *  @param[in]      prefix       ファイル名先頭につける識別子 (UTF-8)。NULL 可。
-     *                               最大 3 文字 (Windows GetTempFileNameW の制約)。
-     *                               4 文字以上を渡した場合は NULL を返し、@p errno_out に EINVAL を格納します。
+     *                               4 文字以上を渡した場合は先頭 3 文字を採用します。
+     *  @param[in]      modes        fopen 互換のモード文字列 ("wb", "w", "w+b" など)。
+     *                               NULL を渡した場合は NULL を返し、@p errno_out に EINVAL を格納します。
+     *                               一時ファイルは常に新規作成のため "r"/"rb" は意味を持ちませんが、
+     *                               API 層での制限は課しません。
      *  @param[out]     path_out     生成された一時ファイル絶対パス (UTF-8) の格納先。
      *  @param[in]      path_size    @p path_out のサイズ (バイト)。PLATFORM_PATH_MAX 以上を推奨します。
      *  @param[out]     errno_out    エラー詳細の格納先。NULL 可。
@@ -108,17 +111,18 @@ extern "C"
      *
      *  @details
      *  Linux 環境では TMPDIR (未設定なら "/tmp") に "<prefix>XXXXXX" のテンプレートで
-     *  mkstemp() によりファイルを atomic に作成し、その fd を fdopen() で FILE* に
+     *  mkstemp() によりファイルを atomic に作成し、その fd を fdopen(@p modes) で FILE* に
      *  変換します。\n
+     *  @p modes に "w"/"w+" を指定しても fdopen() の仕様上ファイルの切り詰めは発生しません。
+     *  mkstemp() が新規作成したファイルは常に空のため、実用上の影響はありません。\n
      *  Windows 環境では GetTempPathW + GetTempFileNameW でユニーク名を生成し、
-     *  _wfopen_s() で再オープンします。@p path_out は wchar→UTF-8 変換した結果が
+     *  _wfopen_s() で指定モードにて開きます。@p path_out は wchar→UTF-8 変換した結果が
      *  格納されます。\n
      *  呼び出し元は不要になったら com_util_fclose() でクローズし、
-     *  必要なら com_util_remove() でファイルを削除する責任があります。\n
-     *  オープンモードは常に "wb" (バイナリ書き込み、既存内容は破棄) です。
+     *  必要なら com_util_remove() でファイルを削除する責任があります。
      */
-    COM_UTIL_EXPORT FILE *COM_UTIL_API com_util_fopen_temp(const char *prefix, char *path_out, size_t path_size,
-                                                           int *errno_out);
+    COM_UTIL_EXPORT FILE *COM_UTIL_API com_util_fopen_temp(const char *prefix, const char *modes, char *path_out,
+                                                           size_t path_size, int *errno_out);
 
 #ifdef __cplusplus
 }

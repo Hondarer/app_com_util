@@ -2,6 +2,7 @@
 #include <mock_com_util.h>
 
 WEAK_ATR FILE *com_util_fopen_temp(const char *prefix,
+                                    const char *modes,
                                     char       *path_out,
                                     size_t      path_size,
                                     int        *errno_out)
@@ -10,14 +11,15 @@ WEAK_ATR FILE *com_util_fopen_temp(const char *prefix,
 
     if (_mock_com_util != nullptr)
     {
-        fp = _mock_com_util->com_util_fopen_temp(prefix, path_out, path_size, errno_out);
+        fp = _mock_com_util->com_util_fopen_temp(prefix, modes, path_out, path_size, errno_out);
     }
 
     if (getTraceLevel() > TRACE_NONE)
     {
-        printf("  > %s %s, 0x%p, %zu, 0x%p",
+        printf("  > %s %s, %s, 0x%p, %zu, 0x%p",
                __func__,
                (prefix != nullptr) ? prefix : "(null)",
+               (modes != nullptr) ? modes : "(null)",
                (void *)path_out,
                path_size,
                (void *)errno_out);
