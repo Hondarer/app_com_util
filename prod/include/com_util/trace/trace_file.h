@@ -2,7 +2,7 @@
 #define COM_UTIL_TRACE_FILE_H
 
 /**
- *  @file           log_file.h
+ *  @file           trace_file.h
  *  @brief          ファイルベーストレースプロバイダライブラリ。
  *  @details        トレースメッセージをローテーション付きテキストファイルへ同期書き込みする
  *                  クロスプラットフォームプロバイダです。\n

@@ -1,7 +1,7 @@
 # trace backend: etw
 
 `etw` backend は、Windows 上で `trace` の OS トレース出力を担当する backend です。  
-通常の利用者は `com_util/trace/logger.h` を経由して使い、ETW 固有 API が必要な場合だけ `com_util/trace/etw.h` を直接扱います。
+通常の利用者は `com_util/trace/tracer.h` を経由して使い、ETW 固有 API が必要な場合だけ `com_util/trace/etw.h` を直接扱います。
 
 ## 目的
 
@@ -17,16 +17,16 @@ Windows でトレースを OS 標準のイベント基盤へ流し、外部の E
 出力イベントは `Trace` イベントとして記録され、主に `Service` と `Message` の情報を持ちます。
 
 - `trace` 上位では OS トレースの出力先として利用される
-- Windows では複数の `com_util_logger_t` があっても、ETW プロバイダ登録は共有される
-- 通常のメッセージ出力は `com_util_logger_write()` 系から透過的に ETW へ流れる
-- `COM_UTIL_LOG_LEVEL_VERBOSE` と `COM_UTIL_LOG_LEVEL_DEBUG` はどちらも ETW Level 5 として扱われる
+- Windows では複数の `com_util_tracer_t` があっても、ETW プロバイダ登録は共有される
+- 通常のメッセージ出力は `com_util_tracer_write()` 系から透過的に ETW へ流れる
+- `COM_UTIL_TRACE_LEVEL_VERBOSE` と `COM_UTIL_TRACE_LEVEL_DEBUG` はどちらも ETW Level 5 として扱われる
 
 ## 代表的な使いどころ
 
 ### `trace.h` から使う場合
 
 通常はこちらです。  
-`com_util_logger_set_os_level()` で OS トレースを有効にし、`com_util_logger_start()` 後に書き込みます。
+`com_util_tracer_set_os_level()` で OS トレースを有効にし、`com_util_tracer_start()` 後に書き込みます。
 
 ### `etw.h` を直接使う場合
 
