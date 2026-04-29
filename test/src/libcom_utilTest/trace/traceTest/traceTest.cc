@@ -8,24 +8,6 @@
 
 extern "C" {
 #include "tracer_internal.h"
-
-void com_util_trace_file_sink_dispose_on_unload(com_util_trace_file_sink_t *handle)
-{
-    (void)handle;
-}
-
-#if defined(PLATFORM_LINUX)
-void com_util_syslog_sink_dispose_on_unload(com_util_syslog_sink_t *handle)
-{
-    (void)handle;
-}
-#elif defined(PLATFORM_WINDOWS)
-void com_util_etw_provider_dispose_on_unload(com_util_etw_provider_t *handle, int process_terminating)
-{
-    (void)handle;
-    (void)process_terminating;
-}
-#endif
 }
 
 #if defined(PLATFORM_LINUX)
