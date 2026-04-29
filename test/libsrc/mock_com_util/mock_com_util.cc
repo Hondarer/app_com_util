@@ -109,7 +109,7 @@ Mock_com_util::Mock_com_util()
         .WillByDefault(Return());
     ON_CALL(*this, com_util_tracer_create())
         .WillByDefault(Return(nullptr));
-    ON_CALL(*this, com_util_tracer_destroy(_))
+    ON_CALL(*this, com_util_tracer_dispose(_))
         .WillByDefault(Return());
     ON_CALL(*this, com_util_tracer_start(_))
         .WillByDefault(Return(0));
@@ -131,6 +131,8 @@ Mock_com_util::Mock_com_util()
         .WillByDefault(Return(0));
     ON_CALL(*this, com_util_tracer_set_stderr_level(_, _))
         .WillByDefault(Return(0));
+    ON_CALL(*this, com_util_tracer_get_state(_))
+        .WillByDefault(Return(COM_UTIL_TRACER_STATE_STOPPED));
     ON_CALL(*this, com_util_tracer_get_os_level(_))
         .WillByDefault(Return(COM_UTIL_TRACE_LEVEL_NONE));
     ON_CALL(*this, com_util_tracer_get_file_level(_))

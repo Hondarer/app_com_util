@@ -55,6 +55,8 @@ com_util_tracer_t *tracer = com_util_tracer_create();
 com_util_tracer_set_file_level(tracer, "./logs/myapp.log",
                            COM_UTIL_TRACE_LEVEL_INFO, 0, 0);
 com_util_tracer_start(tracer);
+com_util_tracer_write(tracer, COM_UTIL_TRACE_LEVEL_INFO, "service ready");
+com_util_tracer_dispose(tracer);
 ```
 
 `max_bytes == 0` の場合は既定サイズ、`generations <= 0` の場合は既定世代数を使います。

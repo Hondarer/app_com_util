@@ -29,7 +29,7 @@
  *  本関数は DllMain および constructor/destructor から呼び出し可能です。\n
  *  内部でレジストリロックを取得しません。
  *  呼び出し前に、すべてのスレッドが trace API
- *  (com_util_tracer_create / com_util_tracer_destroy / com_util_tracer_write 等) の
+ *  (com_util_tracer_create / com_util_tracer_dispose / com_util_tracer_write 等) の
  *  呼び出しを完了している必要があります。
  *  並行してトレース API が呼ばれた場合は未定義動作になります。
  *******************************************************************************

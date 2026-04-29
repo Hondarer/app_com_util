@@ -20,11 +20,12 @@
 `com_util_tracer_start()` 後は started 状態となり、`com_util_tracer_write()` 系で出力できます。
 
 ```text
-create -> set_name / set_* -> start -> write -> stop -> destroy
+create -> set_name / set_* -> start -> write -> stop -> dispose
 ```
 
 started 中は設定変更できず、設定を変える場合は一度 `com_util_tracer_stop()` で stopped に戻します。  
-`com_util_tracer_destroy()` は started / stopped のどちらからでも呼べます。
+`com_util_tracer_dispose()` は started / stopped のどちらからでも呼べます。  
+`com_util_tracer_get_state()` を使うと、handle が `started` / `stopped` / `disposed` のどれかを確認できます。
 
 ## トレースレベル
 
@@ -111,6 +112,11 @@ OS トレースのしきい値を設定します。
 出力の開始と停止を行います。  
 設定変更は stopped 中、書き込みは started 中に行います。
 
+### `com_util_tracer_get_state`
+
+現在の handle 状態を返します。  
+`create` 直後と `stop` 後は `STOPPED`、`start` 後は `STARTED`、`NULL` または利用不可状態は `DISPOSED` です。
+
 ### `com_util_tracer_write` / `com_util_tracer_writef`
 
 通常のトレースメッセージを書き込みます。
@@ -141,7 +147,7 @@ int main(void)
     com_util_tracer_writef(tracer, COM_UTIL_TRACE_LEVEL_WARNING, "retry=%d", 3);
 
     com_util_tracer_stop(tracer);
-    com_util_tracer_destroy(tracer);
+    com_util_tracer_dispose(tracer);
     return 0;
 }
 ```
@@ -162,7 +168,7 @@ com_util_tracer_start(tracer);
 
 com_util_tracer_write(tracer, COM_UTIL_TRACE_LEVEL_INFO, "service ready");
 
-com_util_tracer_destroy(tracer);
+com_util_tracer_dispose(tracer);
 ```
 
 `max_bytes == 0` は既定値、`generations <= 0` も既定値として扱われます。

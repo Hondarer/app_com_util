@@ -132,7 +132,7 @@ TEST_F(traceTest, test_init_and_dispose)
     EXPECT_EQ((size_t)1, trace_registry_count()); // [確認_正常系] - registry に 1 件登録されること。
 
     // Cleanup
-    com_util_tracer_destroy(handle);
+    com_util_tracer_dispose(handle);
     EXPECT_EQ((size_t)0, trace_registry_count()); // [確認_正常系] - destroy 後に registry が空になること。
 }
 
@@ -156,7 +156,7 @@ TEST_F(traceTest, test_registry_tracks_and_expands)
     // Cleanup
     for (com_util_tracer_t *handle : handles)
     {
-        com_util_tracer_destroy(handle);
+        com_util_tracer_dispose(handle);
     }
     EXPECT_EQ((size_t)0, trace_registry_count()); // [確認_正常系] - すべて破棄後に registry が空になること。
 }
@@ -184,7 +184,7 @@ TEST_F(traceTest, test_write_routes_info_to_os_backend)
     EXPECT_EQ(0, result); // [確認_正常系] - 書き込みが成功すること。
 
     // Cleanup
-    com_util_tracer_destroy(handle);
+    com_util_tracer_dispose(handle);
 }
 
 // NULL ハンドルと NULL メッセージが安全に無視されることの確認
@@ -202,7 +202,7 @@ TEST_F(traceTest, test_write_is_null_safe)
     EXPECT_EQ(0, null_message_result);  // [確認_異常系] - NULL メッセージで 0 が返ること。
 
     // Cleanup
-    com_util_tracer_destroy(handle);
+    com_util_tracer_dispose(handle);
 }
 
 // 1024 バイト超の UTF-8 文字列が安全な境界で切り詰められることの確認
@@ -242,7 +242,7 @@ TEST_F(traceTest, test_write_truncates_utf8_boundary)
     EXPECT_EQ(0, result); // [確認_正常系] - 切り詰め後も書き込みが成功すること。
 
     // Cleanup
-    com_util_tracer_destroy(handle);
+    com_util_tracer_dispose(handle);
 }
 
 // writef が format 展開後の文字列を backend へ渡すことの確認
@@ -268,7 +268,7 @@ TEST_F(traceTest, test_writef_formats_message)
     EXPECT_EQ(0, result); // [確認_正常系] - 書き込みが成功すること。
 
     // Cleanup
-    com_util_tracer_destroy(handle);
+    com_util_tracer_dispose(handle);
 }
 
 // HEX 書き込みがラベル付きテキストへ変換されることの確認
@@ -295,7 +295,7 @@ TEST_F(traceTest, test_write_hex_formats_payload)
     EXPECT_EQ(0, result); // [確認_正常系] - 書き込みが成功すること。
 
     // Cleanup
-    com_util_tracer_destroy(handle);
+    com_util_tracer_dispose(handle);
 }
 
 // started 中は設定関数が失敗することの確認
@@ -316,7 +316,7 @@ TEST_F(traceTest, test_config_fails_when_started)
     EXPECT_EQ(-1, file_result); // [確認_異常系] - started 中の set_file_level が失敗すること。
 
     // Cleanup
-    com_util_tracer_destroy(handle);
+    com_util_tracer_dispose(handle);
 }
 
 // stopped 中の file level 設定が file backend 作成と書き込みへ反映されることの確認
@@ -341,7 +341,7 @@ TEST_F(traceTest, test_file_level_routes_to_file_backend)
     EXPECT_EQ(0, result); // [確認_正常系] - file backend 経由の書き込みが成功すること。
 
     // Cleanup
-    com_util_tracer_destroy(handle);
+    com_util_tracer_dispose(handle);
 }
 
 // file path 未設定では file backend へ出力されないことの確認
@@ -362,7 +362,7 @@ TEST_F(traceTest, test_write_without_file_path_skips_file_backend)
     EXPECT_EQ(0, result); // [確認_正常系] - file 無効でもエラーにならないこと。
 
     // Cleanup
-    com_util_tracer_destroy(handle);
+    com_util_tracer_dispose(handle);
 }
 
 // set_name が識別子付き名称を反映することの確認
@@ -391,7 +391,7 @@ TEST_F(traceTest, test_set_name_with_identifier_updates_backend_name)
 #endif
 
     // Cleanup
-    com_util_tracer_destroy(handle);
+    com_util_tracer_dispose(handle);
 }
 
 // COM_UTIL_TRACE_LEVEL_NONE では OS backend が呼ばれないことの確認
@@ -416,7 +416,7 @@ TEST_F(traceTest, test_os_level_none_suppresses_output)
     EXPECT_EQ(0, result); // [確認_正常系] - 出力抑止でもエラーにならないこと。
 
     // Cleanup
-    com_util_tracer_destroy(handle);
+    com_util_tracer_dispose(handle);
 }
 
 // stderr level DEBUG で V と D の marker が出力されることの確認
@@ -439,7 +439,7 @@ TEST_F(traceTest, test_stderr_level_debug_outputs_markers)
     EXPECT_NE(std::string::npos, captured.find("2026-04-26 03:04:05.678 D debug to stderr"));   // [確認_正常系] - DEBUG 行が D で出力されること。
 
     // Cleanup
-    com_util_tracer_destroy(handle);
+    com_util_tracer_dispose(handle);
 }
 
 // stopped 状態では出力関数が失敗することの確認
@@ -462,7 +462,7 @@ TEST_F(traceTest, test_write_fails_when_stopped)
     EXPECT_EQ(-1, hexf_result);   // [確認_異常系] - stopped 状態の write_hexf が失敗すること。
 
     // Cleanup
-    com_util_tracer_destroy(handle);
+    com_util_tracer_dispose(handle);
 }
 
 // start と stop の二重呼び出しが冪等であることの確認
@@ -484,5 +484,5 @@ TEST_F(traceTest, test_start_and_stop_are_idempotent)
     EXPECT_EQ(0, second_stop);  // [確認_正常系] - 2 回目の stop も成功すること。
 
     // Cleanup
-    com_util_tracer_destroy(handle);
+    com_util_tracer_dispose(handle);
 }

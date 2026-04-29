@@ -6,7 +6,7 @@
  *  @date           2026/04/03
  *  @version        1.0.0
  *
- *  com_util_tracer_create / com_util_tracer_destroy / com_util_tracer_start / com_util_tracer_stop / com_util_tracer_write など
+ *  com_util_tracer_create / com_util_tracer_dispose / com_util_tracer_start / com_util_tracer_stop / com_util_tracer_write など
  *  公開 API の実装と、内部レジストリ管理機能を提供します。
  *
  *  @copyright      Copyright (C) Tetsuo Honda. 2026. All rights reserved.
@@ -731,6 +731,33 @@ static void trace_handle_release_on_unload(com_util_tracer_t *handle)
     return stop_handle_for_cleanup(handle);
 }
 
+/* doxygen コメントは、ヘッダに記載 */
+    COM_UTIL_EXPORT com_util_tracer_state_t COM_UTIL_API
+    com_util_tracer_get_state(com_util_tracer_t *handle)
+{
+    com_util_tracer_state_t state;
+
+    if (!handle_is_active(handle))
+    {
+        return COM_UTIL_TRACER_STATE_DISPOSED;
+    }
+    if (config_lock_shared_timed(handle) != 0)
+    {
+        return COM_UTIL_TRACER_STATE_DISPOSED;
+    }
+    if (handle->lifecycle_state != TRACE_HANDLE_ACTIVE)
+    {
+        config_unlock_shared(handle);
+        return COM_UTIL_TRACER_STATE_DISPOSED;
+    }
+
+    state = handle->running
+        ? COM_UTIL_TRACER_STATE_STARTED
+        : COM_UTIL_TRACER_STATE_STOPPED;
+    config_unlock_shared(handle);
+    return state;
+}
+
 #define MAX_BODY (COM_UTIL_TRACER_MESSAGE_MAX_BYTES - 1)
 
 /**
@@ -1300,7 +1327,7 @@ static int hex_write_impl(com_util_tracer_t *handle, com_util_trace_level_t leve
 
 /* doxygen コメントは、ヘッダに記載 */
     COM_UTIL_EXPORT void COM_UTIL_API
-    com_util_tracer_destroy(com_util_tracer_t *handle)
+    com_util_tracer_dispose(com_util_tracer_t *handle)
 {
     if (handle == NULL)
     {

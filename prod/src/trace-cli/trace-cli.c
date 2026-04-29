@@ -39,6 +39,12 @@ static const char *const g_trace_level_names[] = {
     "NONE",
 };
 
+enum trace_cli_prompt_state
+{
+    TRACE_CLI_PROMPT_STATE_UNCREATED = 0,
+    TRACE_CLI_PROMPT_STATE_DISPOSED  = 1
+};
+
 static char *skip_spaces(char *p)
 {
     while (p != NULL && *p != '\0' && isspace((unsigned char)*p))
@@ -254,6 +260,41 @@ static int parse_int_value(const char *token, int *value)
     return 1;
 }
 
+static const char *tracer_state_to_name(com_util_tracer_state_t state)
+{
+    switch (state)
+    {
+    case COM_UTIL_TRACER_STATE_STARTED:
+        return "started";
+    case COM_UTIL_TRACER_STATE_STOPPED:
+        return "stopped";
+    case COM_UTIL_TRACER_STATE_DISPOSED:
+    default:
+        return "disposed";
+    }
+}
+
+static const char *session_prompt_state_to_name(const trace_cli_session_t *session)
+{
+    if (session == NULL)
+    {
+        return "disposed";
+    }
+    if (session->handle != NULL)
+    {
+        return tracer_state_to_name(com_util_tracer_get_state(session->handle));
+    }
+
+    return session->prompt_state == TRACE_CLI_PROMPT_STATE_DISPOSED
+        ? "disposed"
+        : "uncreated";
+}
+
+static void trace_cli_print_prompt(const trace_cli_session_t *session)
+{
+    printf("trace-cli[%s]> ", session_prompt_state_to_name(session));
+}
+
 static int parse_size_value(const char *token, size_t *value)
 {
     char *end = NULL;
@@ -380,9 +421,9 @@ static void print_command_usage(const char *command)
     {
         fprintf(stderr, "使用方法: create\n");
     }
-    else if (strcmp(command, "destroy") == 0)
+    else if (strcmp(command, "dispose") == 0)
     {
-        fprintf(stderr, "使用方法: destroy\n");
+        fprintf(stderr, "使用方法: dispose\n");
     }
     else if (strcmp(command, "start") == 0)
     {
@@ -454,6 +495,7 @@ void trace_cli_session_init(trace_cli_session_t *session)
     }
 
     session->handle = NULL;
+    session->prompt_state = TRACE_CLI_PROMPT_STATE_UNCREATED;
     session->exit_requested = 0;
 }
 
@@ -464,8 +506,9 @@ void trace_cli_session_dispose(trace_cli_session_t *session)
         return;
     }
 
-    com_util_tracer_destroy(session->handle);
+    com_util_tracer_dispose(session->handle);
     session->handle = NULL;
+    session->prompt_state = TRACE_CLI_PROMPT_STATE_DISPOSED;
 }
 
 void trace_cli_print_help(void)
@@ -477,7 +520,7 @@ void trace_cli_print_help(void)
     printf("  exit\n");
     printf("  quit\n");
     printf("  create\n");
-    printf("  destroy\n");
+    printf("  dispose\n");
     printf("  start\n");
     printf("  stop\n");
     printf("  set-name <name|null> [identifier]\n");
@@ -547,12 +590,13 @@ int trace_cli_process_line(trace_cli_session_t *session, const char *line)
         }
         if (session->handle != NULL)
         {
-            fprintf(stderr, "エラー: 既存の handle を destroy してから create を実行してください。\n");
+            fprintf(stderr, "エラー: 既存の handle を dispose してから create を実行してください。\n");
             return -1;
         }
         session->handle = com_util_tracer_create();
         if (session->handle == NULL)
         {
+            session->prompt_state = TRACE_CLI_PROMPT_STATE_UNCREATED;
             printf("handle=NULL\n");
         }
         else
@@ -562,16 +606,17 @@ int trace_cli_process_line(trace_cli_session_t *session, const char *line)
         return 0;
     }
 
-    if (strcmp(command, "destroy") == 0)
+    if (strcmp(command, "dispose") == 0)
     {
         if (next_token(&cursor) != NULL)
         {
             print_command_usage(command);
             return -1;
         }
-        com_util_tracer_destroy(session->handle);
+        com_util_tracer_dispose(session->handle);
         session->handle = NULL;
-        printf("handle=destroyed\n");
+        session->prompt_state = TRACE_CLI_PROMPT_STATE_DISPOSED;
+        printf("handle=disposed\n");
         return 0;
     }
 
@@ -881,7 +926,7 @@ int main(int argc, char *argv[])
 
     while (!session.exit_requested)
     {
-        printf("trace-cli> ");
+        trace_cli_print_prompt(&session);
         fflush(stdout);
 
         if (fgets(line, sizeof(line), stdin) == NULL)

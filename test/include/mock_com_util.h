@@ -96,7 +96,7 @@ public:
 
     // 初期化・終了
     MOCK_METHOD(com_util_tracer_t *, com_util_tracer_create, ());
-    MOCK_METHOD(void, com_util_tracer_destroy, (com_util_tracer_t *));
+    MOCK_METHOD(void, com_util_tracer_dispose, (com_util_tracer_t *));
 
     // 制御
     MOCK_METHOD(int, com_util_tracer_start, (com_util_tracer_t *));
@@ -121,6 +121,7 @@ public:
     MOCK_METHOD(int, com_util_tracer_set_stderr_level, (com_util_tracer_t *, com_util_trace_level_t));
 
     // 取得
+    MOCK_METHOD(com_util_tracer_state_t, com_util_tracer_get_state, (com_util_tracer_t *));
     MOCK_METHOD(com_util_trace_level_t, com_util_tracer_get_os_level, (com_util_tracer_t *));
     MOCK_METHOD(com_util_trace_level_t, com_util_tracer_get_file_level, (com_util_tracer_t *));
     MOCK_METHOD(com_util_trace_level_t, com_util_tracer_get_stderr_level, (com_util_tracer_t *));

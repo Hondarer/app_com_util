@@ -32,7 +32,7 @@
    com_util_tracer_start(tracer);
    com_util_tracer_write(tracer, COM_UTIL_TRACE_LEVEL_INFO, "application started");
    com_util_tracer_stop(tracer);
-   com_util_tracer_destroy(tracer);
+   com_util_tracer_dispose(tracer);
  *  @endcode
  *
  *  @par            使用例 (設定変更)
@@ -47,7 +47,7 @@
    com_util_tracer_start(tracer);
    com_util_tracer_write(tracer, COM_UTIL_TRACE_LEVEL_INFO, "running as myapp-1");
    com_util_tracer_stop(tracer);
-   com_util_tracer_destroy(tracer);
+   com_util_tracer_dispose(tracer);
  *  @endcode
  *
  *  @copyright      Copyright (C) Tetsuo Honda. 2026. All rights reserved.
@@ -161,6 +161,17 @@ typedef enum com_util_trace_level_t
     COM_UTIL_TRACE_LEVEL_NONE     = 6  /**< 出力しない。 */
 } com_util_trace_level_t;
 
+/**
+ *  @enum           com_util_tracer_state_t
+ *  @brief          tracer handle のライフサイクル状態。
+ */
+typedef enum com_util_tracer_state_t
+{
+    COM_UTIL_TRACER_STATE_STOPPED  = 0, /**< 作成済みで停止中。 */
+    COM_UTIL_TRACER_STATE_STARTED  = 1, /**< 作成済みで実行中。 */
+    COM_UTIL_TRACER_STATE_DISPOSED = 2  /**< 利用不可または解放済み。 */
+} com_util_tracer_state_t;
+
 /* ===== デフォルトトレースレベル ===== */
 
 /**
@@ -227,7 +238,7 @@ extern "C"
        com_util_tracer_start(tracer);
        com_util_tracer_write(tracer, COM_UTIL_TRACE_LEVEL_INFO, "application started");
        com_util_tracer_stop(tracer);
-       com_util_tracer_destroy(tracer);
+       com_util_tracer_dispose(tracer);
      *  @endcode
      *
      *  @par            スレッド セーフティ
@@ -287,6 +298,22 @@ extern "C"
      */
     COM_UTIL_EXPORT int COM_UTIL_API
         com_util_tracer_stop(com_util_tracer_t *handle);
+
+    /**
+     *******************************************************************************
+     *  @brief          tracer handle の現在状態を取得する。
+     *
+     *  create 直後および stop 後は stopped、start 後は started を返します。\n
+     *  handle が NULL、解放済み、または shutdown 中で利用できない場合は disposed を返します。\n
+     *  dispose 実行後のポインタ再利用は未定義動作のため、disposed 判定には NULL または
+     *  呼び出し側が保持するセッション状態を使用してください。
+     *
+     *  @param[in]      handle   com_util_tracer_create の戻り値。NULL 可。
+     *  @return         現在の状態 (com_util_tracer_state_t)。
+     *******************************************************************************
+     */
+    COM_UTIL_EXPORT com_util_tracer_state_t COM_UTIL_API
+        com_util_tracer_get_state(com_util_tracer_t *handle);
 
     /**
      *******************************************************************************
@@ -442,7 +469,7 @@ extern "C"
      *******************************************************************************
      */
     COM_UTIL_EXPORT void COM_UTIL_API
-        com_util_tracer_destroy(com_util_tracer_t *handle);
+        com_util_tracer_dispose(com_util_tracer_t *handle);
 
 #ifdef __cplusplus
 }
