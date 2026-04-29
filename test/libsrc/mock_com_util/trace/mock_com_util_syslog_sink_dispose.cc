@@ -1,13 +1,13 @@
 #include <testfw.h>
 #include <mock_com_util.h>
 
-#if defined(PLATFORM_WINDOWS)
+#if defined(PLATFORM_LINUX)
 
-WEAK_ATR void com_util_etw_provider_destroy(com_util_etw_provider_t *handle)
+WEAK_ATR void com_util_syslog_sink_dispose(com_util_syslog_sink_t *handle)
 {
     if (_mock_com_util != nullptr)
     {
-        _mock_com_util->com_util_etw_provider_destroy(handle);
+        _mock_com_util->com_util_syslog_sink_dispose(handle);
     }
 
     if (getTraceLevel() > TRACE_NONE)
@@ -16,4 +16,4 @@ WEAK_ATR void com_util_etw_provider_destroy(com_util_etw_provider_t *handle)
     }
 }
 
-#endif /* PLATFORM_WINDOWS */
+#endif /* PLATFORM_LINUX */

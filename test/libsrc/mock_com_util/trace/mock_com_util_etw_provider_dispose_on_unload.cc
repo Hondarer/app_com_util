@@ -7,7 +7,7 @@
 
 extern "C" {
 
-void com_util_etw_provider_destroy_on_unload(com_util_etw_provider_t *handle, int process_terminating)
+void com_util_etw_provider_dispose_on_unload(com_util_etw_provider_t *handle, int process_terminating)
 {
     (void)handle;
     (void)process_terminating;

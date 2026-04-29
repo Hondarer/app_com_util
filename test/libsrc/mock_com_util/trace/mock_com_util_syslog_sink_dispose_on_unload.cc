@@ -7,7 +7,7 @@
 
 extern "C" {
 
-void com_util_syslog_sink_destroy_on_unload(com_util_syslog_sink_t *handle)
+void com_util_syslog_sink_dispose_on_unload(com_util_syslog_sink_t *handle)
 {
     (void)handle;
 }

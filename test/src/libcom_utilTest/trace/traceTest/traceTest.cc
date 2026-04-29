@@ -9,18 +9,18 @@
 extern "C" {
 #include "tracer_internal.h"
 
-void com_util_trace_file_sink_destroy_on_unload(com_util_trace_file_sink_t *handle)
+void com_util_trace_file_sink_dispose_on_unload(com_util_trace_file_sink_t *handle)
 {
     (void)handle;
 }
 
 #if defined(PLATFORM_LINUX)
-void com_util_syslog_sink_destroy_on_unload(com_util_syslog_sink_t *handle)
+void com_util_syslog_sink_dispose_on_unload(com_util_syslog_sink_t *handle)
 {
     (void)handle;
 }
 #elif defined(PLATFORM_WINDOWS)
-void com_util_etw_provider_destroy_on_unload(com_util_etw_provider_t *handle, int process_terminating)
+void com_util_etw_provider_dispose_on_unload(com_util_etw_provider_t *handle, int process_terminating)
 {
     (void)handle;
     (void)process_terminating;
@@ -92,7 +92,7 @@ protected:
             .WillByDefault(Return(file_handle_));
         ON_CALL(mock_, com_util_trace_file_sink_write(_, _, _))
             .WillByDefault(Return(0));
-        ON_CALL(mock_, com_util_trace_file_sink_destroy(_))
+        ON_CALL(mock_, com_util_trace_file_sink_dispose(_))
             .WillByDefault(Return());
 
 #if defined(PLATFORM_LINUX)
@@ -102,14 +102,14 @@ protected:
             .WillByDefault(Return(0));
         ON_CALL(mock_, com_util_syslog_sink_rename(_, _))
             .WillByDefault(Return(0));
-        ON_CALL(mock_, com_util_syslog_sink_destroy(_))
+        ON_CALL(mock_, com_util_syslog_sink_dispose(_))
             .WillByDefault(Return());
 #elif defined(PLATFORM_WINDOWS)
         ON_CALL(mock_, com_util_etw_provider_create(_))
             .WillByDefault(Return(os_handle_));
         ON_CALL(mock_, com_util_etw_provider_write(_, _, _, _))
             .WillByDefault(Return(0));
-        ON_CALL(mock_, com_util_etw_provider_destroy(_))
+        ON_CALL(mock_, com_util_etw_provider_dispose(_))
             .WillByDefault(Return());
 #endif
     }
@@ -133,7 +133,7 @@ TEST_F(traceTest, test_init_and_dispose)
 
     // Cleanup
     com_util_tracer_dispose(handle);
-    EXPECT_EQ((size_t)0, trace_registry_count()); // [確認_正常系] - destroy 後に registry が空になること。
+    EXPECT_EQ((size_t)0, trace_registry_count()); // [確認_正常系] - dispose 後に registry が空になること。
 }
 
 // get_state が create/start/stop の状態遷移を返すことの確認

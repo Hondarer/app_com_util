@@ -189,7 +189,7 @@ Mock_com_util::Mock_com_util()
         .WillByDefault(Return(nullptr));
     ON_CALL(*this, com_util_trace_file_sink_write(_, _, _))
         .WillByDefault(Return(-1));
-    ON_CALL(*this, com_util_trace_file_sink_destroy(_))
+    ON_CALL(*this, com_util_trace_file_sink_dispose(_))
         .WillByDefault(Return());
 
 #if defined(PLATFORM_LINUX)
@@ -200,7 +200,7 @@ Mock_com_util::Mock_com_util()
         .WillByDefault(Return(-1));
     ON_CALL(*this, com_util_syslog_sink_rename(_, _))
         .WillByDefault(Return(-1));
-    ON_CALL(*this, com_util_syslog_sink_destroy(_))
+    ON_CALL(*this, com_util_syslog_sink_dispose(_))
         .WillByDefault(Return());
 #endif /* PLATFORM_LINUX */
 
@@ -210,7 +210,7 @@ Mock_com_util::Mock_com_util()
         .WillByDefault(Return(nullptr));
     ON_CALL(*this, com_util_etw_provider_write(_, _, _, _))
         .WillByDefault(Return(-1));
-    ON_CALL(*this, com_util_etw_provider_destroy(_))
+    ON_CALL(*this, com_util_etw_provider_dispose(_))
         .WillByDefault(Return());
     ON_CALL(*this, com_util_etw_session_check_access())
         .WillByDefault(Return(-1));

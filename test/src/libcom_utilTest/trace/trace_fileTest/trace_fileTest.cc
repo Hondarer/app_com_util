@@ -114,7 +114,7 @@ TEST_F(trace_fileTest, test_create_opens_file_with_default_flags)
     EXPECT_NE((com_util_trace_file_sink_t *)NULL, handle); // [確認_正常系] - ハンドルが生成されること。
 
     // Cleanup
-    com_util_trace_file_sink_destroy(handle);
+    com_util_trace_file_sink_dispose(handle);
 }
 
 // INFO 行が固定タイムスタンプと I marker で書き込まれることの確認
@@ -139,7 +139,7 @@ TEST_F(trace_fileTest, test_write_formats_info_line)
     EXPECT_EQ(0, result); // [確認_正常系] - 書き込みが成功すること。
 
     // Cleanup
-    com_util_trace_file_sink_destroy(handle);
+    com_util_trace_file_sink_dispose(handle);
 }
 
 // DEBUG 行が D marker で書き込まれることの確認
@@ -164,7 +164,7 @@ TEST_F(trace_fileTest, test_write_formats_debug_marker)
     EXPECT_EQ(0, result); // [確認_正常系] - 書き込みが成功すること。
 
     // Cleanup
-    com_util_trace_file_sink_destroy(handle);
+    com_util_trace_file_sink_dispose(handle);
 }
 
 // ファイル書き込み失敗時に -1 が返ることの確認
@@ -185,7 +185,7 @@ TEST_F(trace_fileTest, test_write_returns_minus_one_on_file_error)
     EXPECT_EQ(-1, result); // [確認_異常系] - com_util_trace_file_sink_write が -1 を返すこと。
 
     // Cleanup
-    com_util_trace_file_sink_destroy(handle);
+    com_util_trace_file_sink_dispose(handle);
 }
 
 // サイズ上限超過時にローテーションが実行されることの確認
@@ -224,12 +224,12 @@ TEST_F(trace_fileTest, test_write_rotates_when_size_limit_is_reached)
     EXPECT_EQ(0, result); // [確認_正常系] - 書き込み後にローテーションが完了すること。
 
     // Cleanup
-    com_util_trace_file_sink_destroy(handle);
+    com_util_trace_file_sink_dispose(handle);
 }
 
-// destroy が NULL ハンドルでも安全であることの確認
-TEST_F(trace_fileTest, test_destroy_with_null_handle_is_safe)
+// dispose が NULL ハンドルでも安全であることの確認
+TEST_F(trace_fileTest, test_dispose_with_null_handle_is_safe)
 {
     // Act & Assert
-    com_util_trace_file_sink_destroy(NULL); // [手順] - NULL ハンドルで destroy を呼ぶ。
+    com_util_trace_file_sink_dispose(NULL); // [手順] - NULL ハンドルで dispose を呼ぶ。
 }
