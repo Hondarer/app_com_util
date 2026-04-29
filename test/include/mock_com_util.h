@@ -156,21 +156,21 @@ public:
     // trace - log_file_sink
     MOCK_METHOD(com_util_trace_file_sink_t *, com_util_trace_file_sink_create, (const char *, size_t, int));
     MOCK_METHOD(int,  com_util_trace_file_sink_write,   (com_util_trace_file_sink_t *, int, const char *));
-    MOCK_METHOD(void, com_util_trace_file_sink_destroy, (com_util_trace_file_sink_t *));
+    MOCK_METHOD(void, com_util_trace_file_sink_dispose, (com_util_trace_file_sink_t *));
 
 #if defined(PLATFORM_LINUX)
     // trace - syslog_sink (Linux only)
     MOCK_METHOD(com_util_syslog_sink_t *, com_util_syslog_sink_create, (const char *, int));
     MOCK_METHOD(int,  com_util_syslog_sink_write,   (com_util_syslog_sink_t *, int, const char *));
     MOCK_METHOD(int,  com_util_syslog_sink_rename,  (com_util_syslog_sink_t *, const char *));
-    MOCK_METHOD(void, com_util_syslog_sink_destroy, (com_util_syslog_sink_t *));
+    MOCK_METHOD(void, com_util_syslog_sink_dispose, (com_util_syslog_sink_t *));
 #endif /* PLATFORM_LINUX */
 
 #if defined(PLATFORM_WINDOWS)
     // trace - trace_etw (Windows only)
     MOCK_METHOD(com_util_etw_provider_t *, com_util_etw_provider_create, (com_util_etw_provider_ref_t));
     MOCK_METHOD(int,  com_util_etw_provider_write,   (com_util_etw_provider_t *, int, const char *, const char *));
-    MOCK_METHOD(void, com_util_etw_provider_destroy, (com_util_etw_provider_t *));
+    MOCK_METHOD(void, com_util_etw_provider_dispose, (com_util_etw_provider_t *));
     MOCK_METHOD(int,  com_util_etw_session_check_access, ());
     MOCK_METHOD(com_util_etw_session_t *, com_util_etw_session_start,
                 (const char *, const char *, com_util_etw_event_callback_t, void *, int *));

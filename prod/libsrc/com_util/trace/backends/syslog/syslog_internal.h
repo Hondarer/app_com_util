@@ -36,7 +36,7 @@
  *  呼び出し側がスレッドの静止を保証します。
  *******************************************************************************
  */
-void com_util_syslog_sink_destroy_on_unload(com_util_syslog_sink_t *handle);
+void com_util_syslog_sink_dispose_on_unload(com_util_syslog_sink_t *handle);
 
 #endif /* PLATFORM_LINUX */
 

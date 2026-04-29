@@ -387,7 +387,7 @@ COM_UTIL_EXPORT int COM_UTIL_API com_util_trace_file_sink_write(com_util_trace_f
 }
 
 /* doxygen コメントは、ヘッダに記載 */
-COM_UTIL_EXPORT void COM_UTIL_API com_util_trace_file_sink_destroy(com_util_trace_file_sink_t *handle)
+COM_UTIL_EXPORT void COM_UTIL_API com_util_trace_file_sink_dispose(com_util_trace_file_sink_t *handle)
 {
     if (handle == NULL)
     {
@@ -415,7 +415,7 @@ COM_UTIL_EXPORT void COM_UTIL_API com_util_trace_file_sink_destroy(com_util_trac
 }
 
 /* doxygen コメントは、ヘッダに記載 */
-void com_util_trace_file_sink_destroy_on_unload(com_util_trace_file_sink_t *handle)
+void com_util_trace_file_sink_dispose_on_unload(com_util_trace_file_sink_t *handle)
 {
     if (handle == NULL)
     {

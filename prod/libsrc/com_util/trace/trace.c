@@ -534,12 +534,12 @@ static void trace_handle_release_normal(com_util_tracer_t *handle)
 {
     if (handle->file_handle != NULL)
     {
-        com_util_trace_file_sink_destroy(handle->file_handle);
+        com_util_trace_file_sink_dispose(handle->file_handle);
         handle->file_handle = NULL;
     }
 
 #if defined(PLATFORM_LINUX)
-    com_util_syslog_sink_destroy(handle->syslog_handle);
+    com_util_syslog_sink_dispose(handle->syslog_handle);
     if (handle->config_rwlock_initialized)
     {
         pthread_rwlock_destroy(&handle->config_rwlock);
@@ -547,7 +547,7 @@ static void trace_handle_release_normal(com_util_tracer_t *handle)
 #elif defined(PLATFORM_WINDOWS)
     if (InterlockedDecrement(&s_trace_ref) == 0)
     {
-        com_util_etw_provider_destroy(s_etw_handle);
+        com_util_etw_provider_dispose(s_etw_handle);
         s_etw_handle = NULL;
     }
     free(handle->service_name);
@@ -567,12 +567,12 @@ static void trace_handle_release_on_unload(com_util_tracer_t *handle)
 {
     if (handle->file_handle != NULL)
     {
-        com_util_trace_file_sink_destroy_on_unload(handle->file_handle);
+        com_util_trace_file_sink_dispose_on_unload(handle->file_handle);
         handle->file_handle = NULL;
     }
 
 #if defined(PLATFORM_LINUX)
-    com_util_syslog_sink_destroy_on_unload(handle->syslog_handle);
+    com_util_syslog_sink_dispose_on_unload(handle->syslog_handle);
 #elif defined(PLATFORM_WINDOWS)
     free(handle->service_name);
 #endif /* PLATFORM_ */
@@ -609,7 +609,7 @@ static void trace_handle_release_on_unload(com_util_tracer_t *handle)
         handle = (com_util_tracer_t *)malloc(sizeof(com_util_tracer_t));
         if (handle == NULL)
         {
-            com_util_syslog_sink_destroy(sp);
+            com_util_syslog_sink_dispose(sp);
             return NULL;
         }
 
@@ -625,7 +625,7 @@ static void trace_handle_release_on_unload(com_util_tracer_t *handle)
 
         if (pthread_rwlock_init(&handle->config_rwlock, NULL) != 0)
         {
-            com_util_syslog_sink_destroy(sp);
+            com_util_syslog_sink_dispose(sp);
             free(handle);
             return NULL;
         }
@@ -676,12 +676,12 @@ static void trace_handle_release_on_unload(com_util_tracer_t *handle)
     if (registry_register_handle(handle) != 0)
     {
 #if defined(PLATFORM_LINUX)
-        com_util_syslog_sink_destroy(handle->syslog_handle);
+        com_util_syslog_sink_dispose(handle->syslog_handle);
         pthread_rwlock_destroy(&handle->config_rwlock);
 #elif defined(PLATFORM_WINDOWS)
         if (InterlockedDecrement(&s_trace_ref) == 0)
         {
-            com_util_etw_provider_destroy(s_etw_handle);
+            com_util_etw_provider_dispose(s_etw_handle);
             s_etw_handle = NULL;
         }
         free(handle->service_name);
@@ -1262,7 +1262,7 @@ static int hex_write_impl(com_util_tracer_t *handle, com_util_trace_level_t leve
 
     if (handle->file_handle != NULL)
     {
-        com_util_trace_file_sink_destroy(handle->file_handle);
+        com_util_trace_file_sink_dispose(handle->file_handle);
         handle->file_handle = NULL;
     }
 
@@ -1383,7 +1383,7 @@ void trace_registry_dispose_all_on_unload(int process_terminating)
 #if defined(PLATFORM_WINDOWS)
     if (s_etw_handle != NULL)
     {
-        com_util_etw_provider_destroy_on_unload(s_etw_handle, process_terminating);
+        com_util_etw_provider_dispose_on_unload(s_etw_handle, process_terminating);
         s_etw_handle = NULL;
     }
     s_trace_ref = 0;

@@ -63,7 +63,7 @@ extern "C"
      *  @param[in]      handle   com_util_syslog_sink_create の戻り値。NULL は無視。
      */
     COM_UTIL_EXPORT void COM_UTIL_API
-        com_util_syslog_sink_destroy(com_util_syslog_sink_t *handle);
+        com_util_syslog_sink_dispose(com_util_syslog_sink_t *handle);
 
 #ifdef __cplusplus
 }

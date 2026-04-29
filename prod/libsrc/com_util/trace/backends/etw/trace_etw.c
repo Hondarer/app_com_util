@@ -163,7 +163,7 @@ COM_UTIL_EXPORT int COM_UTIL_API
 
 /* doxygen コメントは、ヘッダに記載 */
 COM_UTIL_EXPORT void COM_UTIL_API
-    com_util_etw_provider_destroy(com_util_etw_provider_t *handle)
+    com_util_etw_provider_dispose(com_util_etw_provider_t *handle)
 {
     if (handle == NULL)
     {
@@ -175,7 +175,7 @@ COM_UTIL_EXPORT void COM_UTIL_API
 }
 
 /* doxygen コメントは、ヘッダに記載 */
-void com_util_etw_provider_destroy_on_unload(com_util_etw_provider_t *handle, int process_terminating)
+void com_util_etw_provider_dispose_on_unload(com_util_etw_provider_t *handle, int process_terminating)
 {
     if (handle == NULL)
     {

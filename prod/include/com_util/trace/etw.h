@@ -82,7 +82,7 @@ extern "C"
      *  @param[in]      handle   com_util_etw_provider_create の戻り値。NULL は無視。
      */
     COM_UTIL_EXPORT void COM_UTIL_API
-        com_util_etw_provider_destroy(com_util_etw_provider_t *handle);
+        com_util_etw_provider_dispose(com_util_etw_provider_t *handle);
 
     /* ===== セッション (Consumer) API ===== */
 
